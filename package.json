@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/eslint-scope": "^8.3.0",
     "@types/estree": "^1.0.8",
-    "@types/node": "^24.0.0"
+    "@types/node": "^24.0.0",
+    "classnames": "^2.5.1"
   }
 }

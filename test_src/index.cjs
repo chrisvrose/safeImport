@@ -1,9 +1,10 @@
 var {existsSync,readFile} = require('node:fs');
 // const {cwd} = require('process');
 var _var = require('process');
-var {sum, div} = require('./arithmetic.cjs');
-var {sum, div} = require('../output/lodash.bundle.js');
-var {ceil} = require('./lodash.js')
+var {sum, div,sad} = require('./arithmetic.cjs');
+// var {sum, div} = require('../output/lodash.bundle.js');
+// var {ceil} = require('./lodash.js')
+var cn = require('./classnames.bundle.cjs')
 let cwd = process.cwd;
 console.log('a')
 
@@ -20,5 +21,6 @@ console.log(`Read some data`,newLocal,sum(2,34));
 console.log(`Read some data`,newLocal,
     div(7,0),
     div(32,3),
-    ceil(10.24)
+    // ceil(10.24),
+    cn('fooo','foobar')
 );

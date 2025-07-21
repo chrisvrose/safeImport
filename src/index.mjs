@@ -4,10 +4,11 @@ import { getASTAndScope } from './ast/analysis.mjs';
 
 import { getRequireCallsAndConstantArgs } from './calls.mjs';
 import { analyze, instrumentString, instrumentDir } from 'jalangi2';
-import { readFileSync ,realpathSync} from 'node:fs';
+import { readFileSync ,realpathSync ,mkdirSync} from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 
-import {getSliceAndInfoSync} from 'slice-js/dist/slice-code/test/helpers/utils.js';
-import { dirname,join } from 'node:path';
+import {getSliceAndInfoSync} from 'slice-js/src/slice-code/test/helpers/utils.js';
+import path, { dirname,join } from 'node:path';
 /**
  * Call parameter generation
  */
@@ -19,18 +20,11 @@ function main() {
 
     const calls = getRequireCallsAndConstantArgs(scopeManager);
 
-    for (const [moduleName, callBoxes] of calls.entries()) {
-        if (moduleName.startsWith('.')) {
-            console.log('Importing', moduleName, callBoxes);
-        } else {
-            console.log(`Module "${moduleName}" - System module. FIXME skipping`);
-        }
-    }
-    console.log(`Call List`, calls);
+    logCallList(calls);
 
+    const writePromises = [];
     for (const [moduleName, callBox] of calls) {
-        // console.log(callBox);
-        if (!moduleName.startsWith('.')) {
+        if (!isRelativeModule(moduleName)) { // not relative module
             continue;
         }
 
@@ -40,36 +34,27 @@ function main() {
             return [...callBox.entries()].flatMap(([methodName, methodArgsList])=>{
                 const methodNameNormed = methodName.substring(1);
                 console.log("Calls for ",methodNameNormed,methodArgsList)
-                return methodArgsList.map(methodArgsList=>moduleExports[methodNameNormed].apply(moduleExports[methodNameNormed],methodArgsList));
+                return methodArgsList.map(methodArgsList=>{
+                    const methodObj = methodNameNormed===''?moduleExports:moduleExports[methodNameNormed];
+                    methodObj.apply(moduleExports[methodNameNormed],methodArgsList)
+                });
             })
         },relatedModuleNamePath);
-        console.log(`Sliced code ${moduleName}\n`,slicedCode);
+        // console.log(`Sliced code ${moduleName}\n`,slicedCode);
+        const writePath = path.resolve('./dist', moduleName);
+        if(writePath===moduleName){
+            throw Error("Will overwrite!!!!");
+        }
+        mkdirSync(path.dirname(writePath),{recursive: true});
+        console.log(`Writing to`,writePath);
+
+        writePromises.push(writeFile(writePath,slicedCode));
+        
     }
-}
 
-function jalangiInstrumentMain() {
-    const FILE_PATH = './test_src/index.cjs';
-
-
-    const fileString = readFileSync(FILE_PATH).toString();
-    const y = instrumentString(fileString, {});
-    console.log(y);
-}
-
-
-/**
- * Analysis POC
- */
-function jalangiAnalyzeMain() {
-    const FILE_PATH = './test_src/index.cjs';
-
-    const y = analyze(FILE_PATH, ["./node_modules/jalangi2/src/js/sample_analyses/tutorial/LogAll.js", "./src_analysis/analysisCallbackTemplate.cjs"]);
-    // const x = 5;
-    y.then(yp => {
-        console.log("Analysis complete", yp);
-    }).catch(console.error).finally(kek => {
-        console.log("Threw error", kek);
-    })
+    Promise.all(writePromises).then(p=>{
+        console.log("write finished")
+    }).catch(console.log);
 }
 
 if (process.argv[1] === import.meta.filename) {
@@ -77,4 +62,19 @@ if (process.argv[1] === import.meta.filename) {
     main();
 }
 
+
+function logCallList(calls) {
+    for (const [moduleName, callBoxes] of calls.entries()) {
+        if (isRelativeModule(moduleName)) {
+            console.log('Importing', moduleName, callBoxes);
+        } else {
+            console.log(`Module "${moduleName}" - System module. FIXME skipping`);
+        }
+    }
+    console.log(`Call List`, calls);
+}
+
+function isRelativeModule(moduleName) {
+    return moduleName.startsWith('.');
+}
 

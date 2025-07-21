@@ -1,2 +1,14 @@
 Handle aliasing as a important piece in draft
 Please note down problem exploration
+
+
+
+
+
+
+###
+My single lib analysis.
+
+
+- [ ] Scan a library. Get its dependencies.
+- [ ] Call for its dependencies. Proxy it.
