@@ -2,3 +2,4 @@ dist
 output.csv
 output/
 node_modules/
+cache

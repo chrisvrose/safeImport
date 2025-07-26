@@ -5,7 +5,6 @@ import { LibraryCallsRecorder } from './libcalls.mjs';
 import { tagASTNode, getTagKey, untagASTNode } from './ast/tag.mjs';
 import { ExpressionArrayVisitor } from './ast/visitors.mjs';
 import assert from 'assert';
-
 /**
  *
  * @param {import('eslint').Scope.ScopeManager} scopeManager

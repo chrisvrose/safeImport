@@ -3,12 +3,22 @@ Please note down problem exploration
 
 
 
+### Repo mining
+
+-> Get list of all packages
+-> >50000 downloads
+-> filter by package.json exists in root
+-> filter by test libs
+-> filter away typescript -> existence of tsconfig.json
 
 
+-> filter by unsliceable libs (?)
 
-###
-My single lib analysis.
 
+### My single lib analysis.
 
 - [ ] Scan a library. Get its dependencies.
-- [ ] Call for its dependencies. Proxy it.
+- [ ] Call for its dependencies. Webpack them into individual files.
+  - [ ] Optional: Use webpack to push them all into one lib file
+  - [ ] Slice this lib for packages
+  - [ ] Replace/proxy them and then unit test them.

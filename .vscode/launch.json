@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/src/index.mjs",
-            "args": ["${workspaceFolder}/test_src/index.js"],
+            "args": ["${workspaceFolder}/test_src/index.mjs"],
         }
     ]
 }

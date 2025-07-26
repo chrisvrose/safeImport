@@ -56,9 +56,9 @@ export class ExpressionArrayVisitor extends Visitor {
         this.arguments.push(node.value);
     }
     ObjectExpression(node) {
-        console.warning("Not finished");
-        throw Error("TBD");
+        console.warn("Not finished");
         this.arguments.push(new ObjectSimplifierVisitor().visit(node));
+        throw Error("TBD");
     }
 
     /**
@@ -88,17 +88,100 @@ class ObjectSimplifierVisitor extends Visitor {
      * 
      * @param {import("estree").Property} node 
      */
-    Property(node){
-        this.#topOfStack()?.[ node.key.value];
+    Property(node) {
+        this.#topOfStack()?.[node.key.value];
+    }
+
+    /**
+     * 
+     * @param {import('estree').ObjectExpression} node 
+     */
+    ObjectExpression(node) {
+        const x = {};
+        for (const property of node.properties) {
+            if (property.type === 'Property') {
+                if( property.key.type==='PrivateIdentifier'){
+
+                }
+                const propertyKey = 
+                x[property.key]
+            }
+        }
+    }
+    /**
+     * 
+     * @param {import('estree').Literal} node 
+     */
+    Literal(node) {
+        return node.value;
+    }
+
+    /**
+     * 
+     * @param {SpreadExpression} node 
+     */
+    SpreadExpression(node) {
+        throw new Error("unsupported");
     }
 
 
     visit(node) {
-        console.log("Objvisit",node);
+        console.log("Objvisit", node);
         return super.visit(node);
     }
 
-    #topOfStack(){
-        return this.exprStack[this.exprStack.length-1];
+    #topOfStack() {
+        return this.exprStack[this.exprStack.length - 1];
+    }
+}
+
+class GetExpressionStaticValue extends Visitor {
+    /**
+     * 
+     * @param {import('estree').Identifier} node 
+     */
+    Identifier(node) {
+        throw new Error('not compat');
+    }
+    /**
+     * 
+     * @param {import('estree').Literal} node 
+     */
+    Literal(node) {
+        return node.value;
+    }
+    
+    /**
+     * 
+     * @param {import('estree').BinaryExpression} node 
+     * @returns 
+     */
+    BinaryExpression(node) {
+        return this.applyOperation(super.left(node.left), super.right(node.right), node.operator);
+    }
+    /**
+     * 
+     * @param {*} left 
+     * @param {*} right 
+     * @param {import('estree').BinaryOperator} operator 
+     */
+    applyOperation(left, right, operator) {
+        switch (operator) {
+            case '+': return left + right;
+            case '-': return left - right;
+            case '*': return left * right;
+            case '/': return left / right;
+            case '%': return left % right;
+            case '==': return left == right;
+            case '===': return left === right;
+            case '>': return left > right;
+            case '<': return left < right;
+            case '>=': return left >= right;
+            case '<=': return left <= right;
+            case '<<': return left << right;
+            case '>>': return left >> right;
+            case '^': return left ^ right;
+            case '&': return left & right;
+        }
     }
 }

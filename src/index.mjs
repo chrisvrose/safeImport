@@ -3,12 +3,12 @@ import assert from 'node:assert';
 import { getASTAndScope } from './ast/analysis.mjs';
 
 import { getRequireCallsAndConstantArgs } from './calls.mjs';
-import { analyze, instrumentString, instrumentDir } from 'jalangi2';
 import { readFileSync ,realpathSync ,mkdirSync} from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-
+import tsc, { Project, SyntaxKind } from 'ts-morph';
 import {getSliceAndInfoSync} from 'slice-js/src/slice-code/test/helpers/utils.js';
 import path, { dirname,join } from 'node:path';
+// import tsc from 'typescript'
 /**
  * Call parameter generation
  */
@@ -49,7 +49,7 @@ function main() {
         console.log(`Writing to`,writePath);
 
         writePromises.push(writeFile(writePath,slicedCode));
-        
+
     }
 
     Promise.all(writePromises).then(p=>{
@@ -57,9 +57,71 @@ function main() {
     }).catch(console.log);
 }
 
+class ImportCall{
+    /**
+     * @type {'import'|'importExpr'|'require'}
+     */
+    importType;
+    /**
+     * @type {string}
+     */
+    importSyntax;
+    /**
+     * 
+     * @param {'import'|'importExpr'|'require'} importType 
+     * @param {string} importSyntax 
+     */
+    constructor(importType, importSyntax){
+        this.importSyntax = importSyntax;
+        this.importType = importType;
+    }
+}
+
+function main2() {
+    const FILE_PATH = './test_src/index.cjs';
+
+    const project = new Project({compilerOptions:{allowJs: true, checkJs: false,}});
+    project.addSourceFileAtPathIfExists(FILE_PATH);
+
+    // const project = tsc.createProgram([FILE_PATH],);
+    const checker = project.getTypeChecker();
+
+    const sourceFile = project.getSourceFile(FILE_PATH)
+    
+    const importDecls = sourceFile.getImportStringLiterals()
+    for(const importStringDecl of importDecls){
+        console.log(importStringDecl);
+        const importDecl = importStringDecl.getFirstAncestor();
+        if(importDecl.isKind(SyntaxKind.CallExpression)){
+            // the declaration is callExpression. Verify its based an identifier aliasing import or require
+            const importExpr = importDecl.getExpression();
+            const type = checker.getTypeAtLocation(importExpr);
+            console.log("Type of import expression",checker.compilerObject.resolveName());
+            console.log(importExpr);
+            if(importExpr.isKind(SyntaxKind.Identifier)){
+                // import is a require or import
+                const importName = importExpr.getText();
+                if(importName==='require' || importName==='import'){
+                    console.log("Found require/import call",importExpr);
+                }
+            }
+            
+        
+        }else if(importDecl.isKind(SyntaxKind.ImportDeclaration)){
+            // TODO pending extract the calls.
+        }else{
+            console.error("Unexpected import specifier",SyntaxKind[importDecl]);
+        }
+        const importThing = importStringDecl.getParent()
+    }
+    
+    console.log(importDecls);
+}
+
 if (process.argv[1] === import.meta.filename) {
-    console.log("[SafeImport] started")
-    main();
+    console.log("[SafeImport] started");
+    main2();
+    console.log("done");
 }
 
 
@@ -77,4 +139,3 @@ function logCallList(calls) {
 function isRelativeModule(moduleName) {
     return moduleName.startsWith('.');
 }
-
