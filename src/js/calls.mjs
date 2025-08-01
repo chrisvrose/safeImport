@@ -1,10 +1,12 @@
 import { Syntax } from 'esprima';
 import esquery from 'esquery';
-import { getSetOfIdentifierReferencesForRequireUses } from './ast/analysis.mjs';
-import { LibraryCallsRecorder } from './libcalls.mjs';
-import { tagASTNode, getTagKey, untagASTNode } from './ast/tag.mjs';
-import { ExpressionArrayVisitor } from './ast/visitors.mjs';
+import { getASTAndScope, getSetOfIdentifierReferencesForRequireUses } from '../ast/analysis.mjs';
+import { LibraryCallsRecorder } from '../libcalls.mjs';
+import { tagASTNode, getTagKey, untagASTNode } from '../ast/tag.mjs';
+import { ExpressionArrayVisitor } from '../ast/visitors.mjs';
 import assert from 'assert';
+import assert from 'assert';
+import { logCallList, sliceAndWriteCalls } from '../index.mjs';
 /**
  *
  * @param {import('eslint').Scope.ScopeManager} scopeManager
@@ -48,7 +50,10 @@ export function getRequireCallsAndConstantArgs(scopeManager) {
         }
     }
     return callRecorder.calls;
-}/**
+}
+
+
+/**
  *
  * @param {import('eslint').Scope.Definition} declaratorDefinition
  */
@@ -91,5 +96,20 @@ export function getModuleNameFromRequireAssignDeclaration(requireUsingReference)
     assert(moduleImported !== null, "Module has to exist");
 
     return moduleImported;
+}
+// import tsc from 'typescript'
+/**
+ * Call parameter generation
+ */
+function mainOld() {
+    const FILE_PATH = './test_src/index.cjs';
+    const { scopeManager, _parsedModAST } = getASTAndScope(FILE_PATH);
+    assert(scopeManager.scopes.length >= 2, "expected atleast global and module scope");
+    assert(scopeManager.scopes[1].type === 'function', "expected the 'module' scope to have function scope");
+
+    const calls = getRequireCallsAndConstantArgs(scopeManager);
+    logCallList(calls);
+
+    sliceAndWriteCalls(calls, FILE_PATH);
 }
 

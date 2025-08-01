@@ -1,44 +1,65 @@
 import wp from 'webpack';
 import path from 'node:path'
-const outputPath = path.resolve('./output/');
-console.log(outputPath);
 
-const ls = [
-'classnames',
-'semver',
-'ansi-styles',
-'debug',
-'supports-color',
-'chalk',
-'ms',
-'minimatch',
-'strip-ansi',
-'tslib',
-'has-flag',
-'ansi-regex',
-'color-convert',
-'color-name',
-// 'type-fest',
-'string-width'
-]
 
-ls.forEach(l=>{
-    
+if (process.argv[1] === import.meta.filename) {
+    console.log("[SafePack] started");
+    main();
+    console.log("done");
+}
+
+function main() {
+    const ls = [
+        'classnames',
+        'semver',
+        'ansi-styles',
+        // 'debug',
+        // 'supports-color',
+        'chalk',
+        'ms',
+        'minimatch',
+        'strip-ansi',
+        'tslib',
+        'has-flag',
+        'ansi-regex',
+        'color-convert',
+        'color-name',
+        // 'type-fest',
+        'string-width'
+    ];
+
+    ls.forEach(l => {
+
+        wpCompress(l).then(outputFileLocation => {
+            console.log("[wp] success", outputFileLocation);
+        }).catch(err => {
+            console.error("[failed wp]", l);
+            console.error("[wp] error");
+
+        });
+
+
+    });
+}
+
+export function wpCompress(l, outputPath = path.resolve('./output/')) {
+    return new Promise((resolve, reject) => {
     const libraryLocation = import.meta.resolve(l);
     console.log(libraryLocation);
+    const outputFile = l + '.bundle.cjs';
     // throw Error("5");
     wp({
-        entry:libraryLocation,
+        entry: libraryLocation,
         mode: 'production',
-        optimization:{
+        optimization: {
             mangleExports: false,
             avoidEntryIife: true,
-            minimize: false
+            minimize: false,
             
         },
         output: {
             path: outputPath,
-            filename: l+'.bundle.cjs',
+            filename: outputFile,
             clean: false,
             iife: false,
             library: {
@@ -46,15 +67,17 @@ ls.forEach(l=>{
                 // name: l
             }
             // module: true
-        }
-        ,
-    },(err,stats)=>{
+        },
+    }, (err, stats) => {
         if (err || stats.hasErrors()) {
-            console.log(err?.stack)
-            console.log(stats?.hasErrors())
-            console.log(stats?.toJson());
+            // console.log(err?.stack);
+            // console.log(stats?.hasErrors());
+            // console.log(stats?.toJson());
+            reject(err || stats);
+        }else{
+            resolve(path.resolve(outputPath, outputFile));
         }
-    })
+    });
+});
+}
 
-
-})
