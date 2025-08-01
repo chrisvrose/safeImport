@@ -71,11 +71,17 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
 
             }
             const defaultImportIdentifier = importDecl.getDefaultImport();
-            console.log("Default import",defaultImportIdentifier);
+            // console.log("Default import",defaultImportIdentifier);
             if( defaultImportIdentifier !== undefined) {
                 recordImportedIdentifierUsage(defaultImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl, true);
             }
-            // console.log("Namespace import",importDecl.getNamespaceImport());
+
+            const namespaceImportIdentifier = importDecl.getNamespaceImport();
+            // console.log("Namespace import",namespaceImportIdentifier);
+            if( namespaceImportIdentifier !== undefined) {
+                recordNamespaceImportIdentifierUsage(namespaceImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl);
+            }
+            
             // recordImportedIdentifierUsage(defaultImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl, true);
 
             console.log("STOP");
@@ -117,6 +123,69 @@ function handleImportForGivenImport(importStringLiteral,namedImport, mainFilePat
  * @param {string} mainFilePath 
  * @param {LibraryTypesRecorder} libraryCallsRecorder 
  * @param {StringLiteral} importStringLiteral 
+ */
+function recordNamespaceImportIdentifierUsage(importNode, mainFilePath, libraryCallsRecorder, importStringLiteral) {
+    const importRefs = importNode.findReferences();
+    for (const importRef of importRefs) {
+        const referenceSourceFile = importRef.getDefinition().getSourceFile();
+        const comparePath = path.relative(mainFilePath, referenceSourceFile.getFilePath());
+        if (comparePath !== '') {
+            console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
+            continue;
+        }
+        console.log("Compare path", comparePath === '');
+        // const filePath = referenceSourceFile.getFilePath();
+        // console.log("Refset for import",filePath);
+        for (const ref of importRef.getReferences()) {
+            if (ref.isDefinition()) {
+                continue;
+            }
+            // console.log("I am ",ref.isDefinition());
+            const callExpression = ref.getNode().getFirstAncestorByKind(SyntaxKind.CallExpression);
+            
+
+            /**
+             * @type {`.${string}`} 
+             */
+            let getImportSection;
+
+            if(callExpression?.getExpression().getDescendantsOfKind(SyntaxKind.Identifier).some(id=>id===ref.getNode())){
+                // asserted that the call expression is using the importNode
+                if(callExpression.getExpression().isKind(SyntaxKind.PropertyAccessExpression)){
+                    console.log("Used a submethod of import", ref.getNode().getText(),callExpression.getExpression().getText());
+                    ref.getNode().getText();
+                    const expressionImportSection = callExpression.getExpression().getText().split('.');
+                    expressionImportSection.shift();
+                    getImportSection = '.'+expressionImportSection.join('.');
+                }else{
+                    console.warn("Call expression is not using the import node as property access", ref.getNode().getText());
+                    continue;
+                }
+            }else{
+                console.warn("Call expression is not using the import node", callExpression?.getText());
+                continue;
+            }
+            const callExpressionArguments = callExpression?.getArguments();
+            if (callExpressionArguments === undefined || callExpressionArguments.length === 0) {
+                console.warn("No call expressions found for import reference", ref.getNode().getText());
+                continue;
+            }
+
+            // for(const argument of callExpressionArguments){
+            //     console.log(`Arg ${idx} is ${arg.getText()}, type is ${arg.getType()}`);
+            // }
+            // console.log("Noted call for namespace import", importStringLiteral.getLiteralValue(), getImportSection, callExpressionArguments.map(arg => arg.getType().getText()));
+            libraryCallsRecorder.pushToMap(importStringLiteral.getLiteralValue(), getImportSection, callExpressionArguments.map(arg => arg.getType()));
+
+        }
+    }
+}
+/**
+ * 
+ * @param {Identifier} importNode 
+ * @param {string} mainFilePath 
+ * @param {LibraryTypesRecorder} libraryCallsRecorder 
+ * @param {StringLiteral} importStringLiteral 
  * @param {boolean} [isDefaultImport=false]
  */
 function recordImportedIdentifierUsage(importNode, mainFilePath, libraryCallsRecorder, importStringLiteral, isDefaultImport = false) {
@@ -150,7 +219,6 @@ function recordImportedIdentifierUsage(importNode, mainFilePath, libraryCallsRec
             const getImportSection = '.' + (isDefaultImport? 'default':importNode.getText());
             libraryCallsRecorder.pushToMap(importStringLiteral.getLiteralValue(), getImportSection, callExpressionArguments.map(arg => arg.getType()));
 
-            console.log("I am ", callExpression?.getText());
         }
     }
 }
