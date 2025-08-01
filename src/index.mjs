@@ -40,21 +40,21 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
             });
         }, relatedModuleNamePath);
         
-        console.log(`Sliced code ${moduleName}\n`,slicedCode);
-        continue;
-        const writePath = path.resolve('./dist', moduleName);
+        // console.log(`Sliced code ${moduleName}\n`,slicedCode);
+        // continue;
+        const writePath = path.resolve('./dist', moduleName,'index.cjs');
         if (writePath === moduleName) {
             throw Error("Unexpected Directory rewrite. Not allowed.");
         }
         mkdirSync(path.dirname(writePath), { recursive: true });
-        console.log(`Writing to`, writePath);
+        console.log(`Writing module '${moduleName}' to '${writePath}'`);
 
         writePromises.push(writeFile(writePath, slicedCode));
 
     }
 
     Promise.all(writePromises).then(p => {
-        console.log("write finished");
+        // console.log("write finished");
     }).catch(console.log);
 }
 
@@ -86,7 +86,7 @@ function main() {
 if (process.argv[1] === import.meta.filename) {
     console.log("[SafeImport] started");
     main();
-    console.log("done");
+    // console.log("done");
 }
 
 
