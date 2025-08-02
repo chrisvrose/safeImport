@@ -1,16 +1,16 @@
 
 
-import { readFileSync ,realpathSync ,mkdirSync} from 'node:fs';
+import { readFileSync ,mkdirSync} from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import tsm, { Project, SyntaxKind ,ts} from 'ts-morph';
+import { Project} from 'ts-morph';
 import {getSliceAndInfoSync} from 'slice-js/src/slice-code/test/helpers/utils.js';
-import path, { dirname,join } from 'node:path';
+import path from 'node:path';
 import { getImportCallsAndArgumentTypes } from './tsCalls.mjs';
-import { LibraryCallsRecorder } from './libcalls.mjs';
-import { wpCompress } from '../src_bundle/index.mjs';
+import { wpCompress } from './bundle/index.mjs';
+import { LibraryTypesRecorder } from './libcalls.mjs';
 /**
  * 
- * @param {LibraryCallsRecorder['calls']} calls 
+ * @param {ReturnType<LibraryTypesRecorder['generateAllArgumentsForRecordedCalls']>} calls 
  * @param {string} FILE_PATH 
  */
 export async function sliceAndWriteCalls(calls, FILE_PATH) {

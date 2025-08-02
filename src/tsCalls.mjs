@@ -11,7 +11,7 @@ import { LibraryTypesRecorder } from './libcalls.mjs';
  * @returns {LibraryTypesRecorder} instance of recorded library calls
  */
 export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePath) {
-    const libraryCallsRecorder = new LibraryTypesRecorder();
+    const libraryCallsRecorder = new LibraryTypesRecorder(checker);
     for (const importStringDecl of importDecls) {
         // console.log(importStringDecl);
         const importDecl = importStringDecl.getFirstAncestor();
