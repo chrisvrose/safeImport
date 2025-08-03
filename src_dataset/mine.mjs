@@ -7,7 +7,7 @@ import { FILTER_LIST } from './FILTER_LIST.mjs';
 /**
  * 
  * @param {[string,string,number]} param0 
- * @returns {Promise<[string,string|null]>}
+ * @returns {Promise<[string,string|null]>} second argument is null if ineligible for slicing
  */
 export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     const repoPath = resolve('cache/repos', repoName)
@@ -31,14 +31,25 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     // console.log(packageJSONContentsString);
     const packageJSONContents = JSON.parse(packageJSONContentsString)
     // console.log(repoName, packageJSONContents.license)
+    if(!hasAnyActualDependencies(packageJSONContents, repoName)) {
+        console.log("[git] skipping", repoName, "has no dependencies");
+        return [repoName, null];
+    }
+
     const hasDependencies = checkTestingDependencies(packageJSONContents, repoName);
     if (hasDependencies)
         return [repoName, ((packageJSONContents?.scripts?.test))]
     else return [repoName, null]
 }
+function hasAnyActualDependencies(packageJSONContents, repoName) {
+    if (packageJSONContents.dependencies !== undefined && Object.keys(packageJSONContents.dependencies).length > 0) {
+        return true;
+    }
+    return false;
+}
 
 function checkTestingDependencies(packageJSONContents, repoName) {
-    const testingLibraries = new Set(['jest', 'mocha', 'chai', 'istanbul', 'vitest']);
+    const testingLibraries = new Set(['mocha', 'istanbul']);
     const dependencies = new Set();
     if (packageJSONContents.dependencies !== undefined) {
         for (const dep of Object.keys(packageJSONContents.dependencies)) {

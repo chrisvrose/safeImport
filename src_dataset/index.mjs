@@ -22,15 +22,15 @@ const intermediateRepoList = await cacheFunctionOutput('repos.json', async funct
      */
     const withRepos = packageList.map(e => [e[0], packageRepos[e[0]], e[1]])
     console.log('withrepos', withRepos.length);
-    const withExactRepos = withRepos.filter(e => ((e[1]) !== null && (e[1]) !== undefined && (e[1]) !== ""))
+    const withExactRepos = withRepos.filter(e => ((e[1]) !== null && (e[1]) !== undefined && (e[1]) !== "")) // filter out repos that are not available
     console.log('withreposCleaned', withExactRepos.length);
-    withExactRepos.sort((a,b)=>(-a[2]+b[2]))
+    withExactRepos.sort((a,b)=>(-a[2]+b[2])) // sort by download count
     return withExactRepos;
 })
 // const packageMap = new Map(packageList)
 
 console.log(intermediateRepoList.length)
-const intermediateRepoListSmaller = intermediateRepoList.slice(0,2000);
+const intermediateRepoListSmaller = intermediateRepoList.slice(0,250);
 
 const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,15,cloneRepoAndCheck)
 
