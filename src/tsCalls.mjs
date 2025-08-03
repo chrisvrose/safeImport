@@ -52,9 +52,29 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                         // this is a variable declaration
                         const varDecl = parent;
                         const varName = varDecl.getName();
+                        const varDecls = varDecl.getNameNode();
+                        // default import
+                        if( varDecls.isKind(SyntaxKind.Identifier)) {
+                            recordImportedIdentifierUsage(varDecls, mainFilePath, libraryCallsRecorder, importStringDecl, true);
+                        }else if(varDecls.isKind(SyntaxKind.ObjectBindingPattern)) {
+                            const destructuredElements = varDecls.getElements();
+                            for (const destructuredElement of destructuredElements) {
+                                const destructuredElementName = destructuredElement.getNameNode();
+                                if (destructuredElementName.isKind(SyntaxKind.Identifier)) {
+                                    recordImportedIdentifierUsage(destructuredElementName, mainFilePath, libraryCallsRecorder, importStringDecl);
+                                } else if (destructuredElementName.isKind(SyntaxKind.ObjectBindingPattern)) {
+                                    // TODO handle object binding pattern
+                                    console.warn("Nested binding pattern not handled yet", destructuredElementName.getText());
+                                } else {
+                                    console.error("Unexpected destructured element", destructuredElementName.getText());
+                                }
+                            }
+                        }
                         console.log("Variable name", varName);
                         // check if declaration is identifier or object pattern
                     }
+                    console.log("Require arguments. Skipping");
+                    continue;
                     throw Error("Not implemented yet");
                 }
             }
@@ -221,5 +241,37 @@ function recordImportedIdentifierUsage(importNode, mainFilePath, libraryCallsRec
 
         }
     }
+}
+/**
+ * 
+ * @param {*} calls 
+ * @param {string} fileName 
+ */
+export function logCallList(calls,fileName) {
+    console.log(`--- [Call Log List: ${fileName}] ---`)
+    console.log(`[Call Log] Call List for ${calls.size} modules`);
+    for (const [moduleName, callBoxes] of calls.entries()) {
+        if (isRelativeModule(moduleName) || isNodeModule(moduleName)) {
+            console.log(`Local/sys Module "${moduleName}" - System module. FIXME skipping`);
+        } else {
+            console.log('Library Module', moduleName, callBoxes);
+        }
+    }
+    console.log(`Call List`, calls);
+    console.log(`--- [Call Log End List: ${fileName}] ---`);
+
+}
+export function isRelativeModule(moduleName) {
+    return moduleName.startsWith('.');
+}
+/**
+ * True if an inbuilt Node.js module.
+ * @param {string} moduleName
+ * @returns
+ */
+export function isNodeModule(moduleName) {
+    if (moduleName.startsWith('node:')) return true;
+    const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto'];
+    return nodeModules.includes(moduleName);
 }
 

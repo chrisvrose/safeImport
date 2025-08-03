@@ -1,11 +1,11 @@
 
 
-import { readFileSync ,mkdirSync} from 'node:fs';
+import { readFileSync, mkdirSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { Project} from 'ts-morph';
-import {getSliceAndInfoSync} from 'slice-js/src/slice-code/test/helpers/utils.js';
+import { Project } from 'ts-morph';
+import { getSliceAndInfoSync } from 'slice-js/src/slice-code/test/helpers/utils.js';
 import path from 'node:path';
-import { getImportCallsAndArgumentTypes } from './tsCalls.mjs';
+import { getImportCallsAndArgumentTypes, isNodeModule, isRelativeModule, logCallList } from './tsCalls.mjs';
 import { wpCompress } from './bundle/index.mjs';
 import { LibraryTypesRecorder } from './libcalls.mjs';
 /**
@@ -22,10 +22,10 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
             continue;
         }
         console.log(`Slicing module ${moduleName} - ${callBox.size} calls`);
-        
+
         // const relatedModuleNamePath = import.meta.resolve(moduleName);
         // console.log(`Related module path`, relatedModuleNamePath);
-        
+
         const relatedModuleNamePath = await wpCompress(moduleName)
         const fileSource = readFileSync(relatedModuleNamePath).toString('utf-8');
         // continue; // TODO - handle relative modules
@@ -39,10 +39,10 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
                 });
             });
         }, relatedModuleNamePath);
-        
+
         // console.log(`Sliced code ${moduleName}\n`,slicedCode);
         // continue;
-        const writePath = path.resolve('./dist', moduleName,'index.cjs');
+        const writePath = path.resolve('./dist', moduleName, 'index.cjs');
         if (writePath === moduleName) {
             throw Error("Unexpected Directory rewrite. Not allowed.");
         }
@@ -60,9 +60,9 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
 
 function main() {
     // const FILE_PATH = './test_src/index.cjs';
-    const FILE_PATH = './test_src/index.mjs';
+    const FILE_PATH = './test_src/index.cjs';
 
-    const project = new Project({compilerOptions:{allowJs: true, checkJs: false,}});
+    const project = new Project({ compilerOptions: { allowJs: true, checkJs: false, } });
     project.addSourceFileAtPathIfExists(FILE_PATH);
 
     // const project = tsc.createProgram([FILE_PATH],);
@@ -72,13 +72,13 @@ function main() {
 
     const importDecls = sourceFile.getImportStringLiterals()
     // foreach library, get a list of import calls
-    
-    const calls = getImportCallsAndArgumentTypes(importDecls,checker,FILE_PATH);
+
+    const calls = getImportCallsAndArgumentTypes(importDecls, checker, FILE_PATH);
 
     const callMap = calls.generateAllArgumentsForRecordedCalls();
-    
-    logCallList(callMap);
-    sliceAndWriteCalls(callMap, FILE_PATH).then(()=>{
+
+    logCallList(callMap,FILE_PATH);
+    sliceAndWriteCalls(callMap, FILE_PATH).then(() => {
         console.log("Slicing and writing calls done");
     });
 }
@@ -86,35 +86,6 @@ function main() {
 if (process.argv[1] === import.meta.filename) {
     console.log("[SafeImport] started");
     main();
-    // console.log("done");
 }
 
 
-export function logCallList(calls) {
-    console.log(`[Call Log] Call List for ${calls.size} modules`);
-    for (const [moduleName, callBoxes] of calls.entries()) {
-        if (isRelativeModule(moduleName)) {
-            console.log('Importing', moduleName, callBoxes);
-        } else {
-            console.log(`Module "${moduleName}" - System module. FIXME skipping`);
-        }
-    }
-    console.log(`Call List`, calls);
-    console.log(`[Call Log] End List for ${calls.size} modules`);
-
-}
-
-function isRelativeModule(moduleName) {
-    return moduleName.startsWith('.');
-}
-
-/**
- * True if an inbuilt Node.js module.
- * @param {string} moduleName 
- * @returns 
- */
-function isNodeModule(moduleName) {
-    if(moduleName.startsWith('node:')) return true;
-    const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto']
-    return nodeModules.includes(moduleName);
-}
