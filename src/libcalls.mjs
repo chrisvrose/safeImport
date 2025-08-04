@@ -4,7 +4,7 @@
 */
 
 import tsm, { Type } from 'ts-morph';
-import { simpleFaker, faker } from '@faker-js/faker'
+import { simpleFaker } from '@faker-js/faker'
 export class LibraryTypesRecorder {
     /**
      * @type {Map<string,Map<string,Type[][]>>}
@@ -53,7 +53,7 @@ export class LibraryTypesRecorder {
              */
             const moduleCallMap = new Map();// todo refactor
             for (const [libraryFunctionSegment, argsList] of modulePortion) {
-                const argsForFunctionSimple = argsList.map(args => args.map(arg => this.instantiateType(arg)));
+                // const argsForFunctionSimple = argsList.map(args => args.map(arg => this.instantiateType(arg)));
                 const argsForFunction = argsList.flatMap(args => simpleFaker.helpers.multiple(()=> args.map(arg => this.instantiateFakerOnType(arg))));
 
                 moduleCallMap.set(libraryFunctionSegment, argsForFunction);
@@ -64,40 +64,19 @@ export class LibraryTypesRecorder {
     }
 
     /**
-     * If the the arguments types are available in the map, instantiate set of arguments matching the types.
-     * @param {string} moduleName 
-     * @param {string} libraryFunctionSegment 
-     * @returns {(GenericLiteralType|null|undefined|{})[][]|undefined}
-     */
-    generateArgumentsForCall(moduleName, libraryFunctionSegment) {
-        const modulePortion = this.#calls.get(moduleName);
-        if (modulePortion === undefined) {
-            return undefined;
-        }
-
-        const argsTypesForFunctionCalls = modulePortion.get(libraryFunctionSegment);
-        if (argsTypesForFunctionCalls === undefined) {
-            return undefined;
-        }
-        return argsTypesForFunctionCalls.map(argTypeForSingleCall => {
-            return argTypeForSingleCall.map(type => {
-                return this.instantiateType(type);
-
-            });
-        });
-
-    }
-    /**
      * 
      * @param {Type} type 
      */
     instantiateFakerOnType(type) {
         const literalValue = type.getLiteralValue();
-        if (literalValue !== undefined) {
+        if(type.isBooleanLiteral()){
+            return type.getText() === 'true';
+        } else if (literalValue !== undefined) {
             return literalValue;
         } else if (type.isUndefined()) {
             return undefined;
         } else if (type.isString()) {
+            
             return simpleFaker.string.alphanumeric();
         } else if (type.isNumber()) {
             return simpleFaker.number.int();
@@ -134,72 +113,5 @@ export class LibraryTypesRecorder {
             return undefined;
         }
 
-    }
-    /**
-     * 
-     * @param {Type} type 
-     * @returns 
-     */
-    instantiateType(type) {
-        const literalValue = type.getLiteralValue();
-        if (literalValue !== undefined) {
-            return literalValue;
-        } else if (type.isUndefined()) {
-            return undefined;
-        } else if (type.isString()) {
-            return "";
-        } else if (type.isNumber()) {
-            return 0;
-        } else if (type.isBoolean()) {
-            return false;// BAD IDEA
-        } else if (type.isArray()) {
-            return [];
-        } else if (type.isObject()) {
-            const newObj = {};
-            for (const prop of type.getProperties()) {
-                const propName = prop.getName();
-                const declarations = prop.getDeclarations();
-                let propType = prop.getDeclaredType();
-                if (declarations.length !== 1) {
-                    console.warn("Multiple declarations for property", propName, "in type", type.getText());
-                } else {
-                    propType = this.checker.getTypeOfSymbolAtLocation(prop, declarations[0]);
-                }
-                newObj[propName] = this.instantiateType(propType);
-            }
-            // TODO - handle functions
-            return newObj;
-        } else {
-            console.warn("Unknown type to instantiate", type.getText());
-            return undefined;
-        }
-    }
-    /**
-     * 
-     * @param {Type} type 
-     */
-    instantiateMultipleFromType(type) {
-        if (type.isStringLiteral()) {
-            return [type.getLiteralValue()];
-        } else if (type.isNumberLiteral()) {
-            return [Number(type.getText())];
-        } else if (type.isBooleanLiteral()) {
-            return [type.getText() === 'true'];
-        } else if (type.is) {
-
-        } else if (type.isString()) {
-            return ["", "a", "b"];
-        } else if (type.isNumber()) {
-            return [0, 1, 2];
-        } else if (type.isBoolean()) {
-            return [false, true];
-        } else if (type.isArray()) {
-            return [[]];
-        } else if (type.isObject()) {
-            // TODO - handle functions
-            return [{}];
-        }
-        console.warn("Unknown type to instantiate", type.getText());
-        return [];
     }
 }
