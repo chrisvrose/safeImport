@@ -19,6 +19,7 @@
     "esquery": "^1.6.0",
     "esrecurse": "^4.3.0",
     "estraverse": "^5.3.0",
+    "find-package-json": "^1.2.0",
     "git-client": "^1.9.3",
     "glob": "^11.0.3",
     "jalangi2": "^0.2.6",
