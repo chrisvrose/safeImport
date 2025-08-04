@@ -11,9 +11,8 @@ import { LibraryTypesRecorder } from './libcalls.mjs';
 /**
  * 
  * @param {ReturnType<LibraryTypesRecorder['generateAllArgumentsForRecordedCalls']>} calls 
- * @param {string} FILE_PATH 
  */
-export async function sliceAndWriteCalls(calls, FILE_PATH) {
+export async function sliceAndWriteCalls(calls) {
     const writePromises = [];
 
     for (const [moduleName, callBox] of calls) {
@@ -35,7 +34,16 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
                 console.log("Calls for ", methodNameNormed, methodArgsList);
                 return methodArgsList.map(methodArgsList => {
                     const methodObj = (methodNameNormed === '') ? moduleExports : moduleExports[methodNameNormed];
-                    methodObj.apply(moduleExports[methodNameNormed], methodArgsList);
+                    if(methodObj === undefined) {
+                        console.warn(`Method ${methodNameNormed} not found in module ${moduleName}`);
+                        return;
+                    }
+                    try{
+                        methodObj.apply(moduleExports[methodNameNormed], methodArgsList);
+                    } catch(e) {
+                        console.warn(`Error calling method ${methodNameNormed} with args ${methodArgsList} in module ${moduleName}`, e);
+                        return;
+                    }      
                 });
             });
         }, relatedModuleNamePath);
@@ -58,34 +66,71 @@ export async function sliceAndWriteCalls(calls, FILE_PATH) {
     }).catch(console.log);
 }
 
-function main() {
+/**
+ * 
+ * @param {string} filePath 
+ */
+function driver(folderPath = './test_src/anymatch') {
     // const FILE_PATH = './test_src/index.cjs';
-    const FILE_PATH = './test_src/index.cjs';
 
     const project = new Project({ compilerOptions: { allowJs: true, checkJs: false, } });
-    project.addSourceFileAtPathIfExists(FILE_PATH);
 
+    const scriptGlobs = constructJavascriptGlobInFolder(folderPath)
+    project.addSourceFilesAtPaths(scriptGlobs);
+    const sourceFiles = project.getSourceFiles()
+
+    const libraryTypesRecorder = new LibraryTypesRecorder(project.getTypeChecker());
     // const project = tsc.createProgram([FILE_PATH],);
     const checker = project.getTypeChecker();
+    console.log(`Source files found: ${sourceFiles.length}`, ...sourceFiles.map(sf => sf.getFilePath()));
+    for (const sourceFile of sourceFiles) {
+        const filePath = sourceFile.getFilePath();
+        console.log(`[analyzer] Processing file: ${filePath}`);
+        
+        const importDecls = sourceFile.getImportStringLiterals()
+        // foreach library, get a list of import calls
+        
+        getImportCallsAndArgumentTypes(importDecls, checker, filePath,libraryTypesRecorder);
+    }
 
-    const sourceFile = project.getSourceFile(FILE_PATH)
+    const callMap = libraryTypesRecorder.generateAllArgumentsForRecordedCalls();
 
-    const importDecls = sourceFile.getImportStringLiterals()
-    // foreach library, get a list of import calls
 
-    const calls = getImportCallsAndArgumentTypes(importDecls, checker, FILE_PATH);
-
-    const callMap = calls.generateAllArgumentsForRecordedCalls();
-
-    logCallList(callMap,FILE_PATH);
-    sliceAndWriteCalls(callMap, FILE_PATH).then(() => {
+    logCallList(callMap, 'FakeModuleName');
+    sliceAndWriteCalls(callMap).then(() => {
         console.log("Slicing and writing calls done");
     });
 }
 
 if (process.argv[1] === import.meta.filename) {
     console.log("[SafeImport] started");
-    main();
+    driver();
 }
 
+
+/**
+ * 
+ * @param {string} folderPath 
+ * @returns {string[]}
+ */
+function constructJavascriptGlobInFolder(folderPath) {
+    return [
+        ["**/*.js", true],
+        ["**/*.mjs", true],
+        ["**/*.cjs", true],
+        ["**/*.d.ts", false],
+        ["**/*.ts", true],
+        ["**/node_modules/**", false],
+        ["**/dist/**", false],
+        ["**/build/**", false],
+        ["**/out/**", false],
+        ["**/coverage/**", false],
+        ["**/test/**", false],
+        ["**/tests/**", false],
+        ["**/__tests__/**", false],
+        ["**/__mocks__/**", false],
+    ].map(glob => {
+        const prefix = glob[1] ? '' : '!';
+        return prefix+path.resolve(folderPath, glob[0])});
+}
 
