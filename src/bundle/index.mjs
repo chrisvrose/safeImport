@@ -57,6 +57,11 @@ export function wpCompress(l, outputPath = path.resolve('./output/')) {
             minimize: false,
             
         },
+        resolve:{
+            fallback:{
+                 "path": false 
+            }
+        },
         output: {
             path: outputPath,
             filename: outputFile,
@@ -70,9 +75,8 @@ export function wpCompress(l, outputPath = path.resolve('./output/')) {
         },
     }, (err, stats) => {
         if (err || stats.hasErrors()) {
-            // console.log(err?.stack);
-            // console.log(stats?.hasErrors());
-            // console.log(stats?.toJson());
+            console.error(`[WebPack] Error Stack`,err?.stack);
+            console.log(`[WebPack]`,stats?.toJson().errors);
             reject(err || stats);
         }else{
             resolve(path.resolve(outputPath, outputFile));

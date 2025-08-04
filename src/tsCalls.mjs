@@ -8,10 +8,12 @@ import { LibraryTypesRecorder } from './libcalls.mjs';
  * @param {tsm.StringLiteral[]} importDecls
  * @param {tsm.TypeChecker} checker
  * @param {string} mainFilePath Main file path for the script being analyzed
+ * @param {LibraryTypesRecorder} libraryTypesRecorder recorder to use for library calls
  * @returns {LibraryTypesRecorder} instance of recorded library calls
+ * 
  */
-export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePath) {
-    const libraryCallsRecorder = new LibraryTypesRecorder(checker);
+export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePath, libraryTypesRecorder) {
+    // const libraryTypesRecorder = new LibraryTypesRecorder(checker);
     for (const importStringDecl of importDecls) {
         // console.log(importStringDecl);
         const importDecl = importStringDecl.getFirstAncestor();
@@ -43,9 +45,9 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                     }
 
 
-                    console.log("Found require/import call", importExpr);
+                    // console.log("Found require/import call", importExpr);
                     // extract the variables imported from the callexpression
-                    const importArgs = importDecl.getArguments();
+                    // const importArgs = importDecl.getArguments();
 
                     const parent = importDecl.getParent();
                     if (parent?.isKind(SyntaxKind.VariableDeclaration)) {
@@ -55,13 +57,14 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                         const varDecls = varDecl.getNameNode();
                         // default import
                         if( varDecls.isKind(SyntaxKind.Identifier)) {
-                            recordImportedIdentifierUsage(varDecls, mainFilePath, libraryCallsRecorder, importStringDecl, true);
+                            // this is like a namespace import. this is not a default import because default imports in require are indicated by `.default`
+                            recordNamespaceImportIdentifierUsage(checker, varDecls, mainFilePath, libraryTypesRecorder, importStringDecl);
                         }else if(varDecls.isKind(SyntaxKind.ObjectBindingPattern)) {
                             const destructuredElements = varDecls.getElements();
                             for (const destructuredElement of destructuredElements) {
                                 const destructuredElementName = destructuredElement.getNameNode();
                                 if (destructuredElementName.isKind(SyntaxKind.Identifier)) {
-                                    recordImportedIdentifierUsage(destructuredElementName, mainFilePath, libraryCallsRecorder, importStringDecl);
+                                    recordImportedIdentifierUsage(checker, destructuredElementName, mainFilePath, libraryTypesRecorder, importStringDecl);
                                 } else if (destructuredElementName.isKind(SyntaxKind.ObjectBindingPattern)) {
                                     // TODO handle object binding pattern
                                     console.warn("Nested binding pattern not handled yet", destructuredElementName.getText());
@@ -87,19 +90,19 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
 
             for (const namedImport of namedImports) {
                 // TODO handle aliases
-                handleImportForGivenImport(importStringDecl,namedImport, mainFilePath, libraryCallsRecorder);
+                handleImportForGivenImport(checker, importStringDecl,namedImport, mainFilePath, libraryTypesRecorder);
 
             }
             const defaultImportIdentifier = importDecl.getDefaultImport();
             // console.log("Default import",defaultImportIdentifier);
             if( defaultImportIdentifier !== undefined) {
-                recordImportedIdentifierUsage(defaultImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl, true);
+                recordImportedIdentifierUsage(checker, defaultImportIdentifier, mainFilePath, libraryTypesRecorder, importStringDecl, true);
             }
 
             const namespaceImportIdentifier = importDecl.getNamespaceImport();
             // console.log("Namespace import",namespaceImportIdentifier);
             if( namespaceImportIdentifier !== undefined) {
-                recordNamespaceImportIdentifierUsage(namespaceImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl);
+                recordNamespaceImportIdentifierUsage(checker, namespaceImportIdentifier, mainFilePath, libraryTypesRecorder, importStringDecl);
             }
             
             // recordImportedIdentifierUsage(defaultImportIdentifier, mainFilePath, libraryCallsRecorder, importStringDecl, true);
@@ -113,17 +116,18 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
 
     }
     // throw Error("Not implemented yet");
-    return libraryCallsRecorder;
+    return libraryTypesRecorder;
 }
 
 /**
  * 
+ * @param {tsm.TypeChecker} checker
  * @param {tsm.StringLiteral} importStringLiteral
  * @param {ImportSpecifier} namedImport 
  * @param {string} mainFilePath 
  * @param {LibraryTypesRecorder} libraryCallsRecorder
  */
-function handleImportForGivenImport(importStringLiteral,namedImport, mainFilePath, libraryCallsRecorder) {
+function handleImportForGivenImport(checker, importStringLiteral,namedImport, mainFilePath, libraryCallsRecorder) {
     const aliasNode = namedImport.getAliasNode();
     if (aliasNode !== undefined) {
         console.error("Unhandled named import alias", aliasNode.getText());
@@ -135,16 +139,17 @@ function handleImportForGivenImport(importStringLiteral,namedImport, mainFilePat
         throw Error("Unexpected string literal import node. Expected identifier");
     }
 
-    recordImportedIdentifierUsage(importNode, mainFilePath, libraryCallsRecorder, importStringLiteral);
+    recordImportedIdentifierUsage(checker, importNode, mainFilePath, libraryCallsRecorder, importStringLiteral);
 }
 /**
  * 
+ * @param {tsm.TypeChecker} checker
  * @param {Identifier} importNode 
  * @param {string} mainFilePath 
  * @param {LibraryTypesRecorder} libraryCallsRecorder 
  * @param {StringLiteral} importStringLiteral 
  */
-function recordNamespaceImportIdentifierUsage(importNode, mainFilePath, libraryCallsRecorder, importStringLiteral) {
+function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath, libraryCallsRecorder, importStringLiteral) {
     const importRefs = importNode.findReferences();
     for (const importRef of importRefs) {
         const referenceSourceFile = importRef.getDefinition().getSourceFile();
@@ -173,15 +178,20 @@ function recordNamespaceImportIdentifierUsage(importNode, mainFilePath, libraryC
                 // asserted that the call expression is using the importNode
                 if(callExpression.getExpression().isKind(SyntaxKind.PropertyAccessExpression)){
                     console.log("Used a submethod of import", ref.getNode().getText(),callExpression.getExpression().getText());
-                    ref.getNode().getText();
+                    // ref.getNode().getText();
                     const expressionImportSection = callExpression.getExpression().getText().split('.');
                     expressionImportSection.shift();
                     getImportSection = '.'+expressionImportSection.join('.');
                 }else{
                     console.warn("Call expression is not using the import node as property access", ref.getNode().getText());
+
                     continue;
                 }
-            }else{
+            }else if(callExpression?.getExpression().isKind(SyntaxKind.Identifier)) {
+                // the call expression is using the import node as identifier
+                getImportSection = '.'
+
+            }else {
                 console.warn("Call expression is not using the import node", callExpression?.getText());
                 continue;
             }
@@ -191,24 +201,42 @@ function recordNamespaceImportIdentifierUsage(importNode, mainFilePath, libraryC
                 continue;
             }
 
+            const callArguments = callExpressionArguments.map((arg,i) => {
+                const callExpressionArg = arg.getType();
+                if(callExpressionArg.isAny()){
+                    const funcCall = callExpression.getExpression();
+                    const funcType = checker.getTypeAtLocation(funcCall);
+                    const paramType = checker.getTypeAtLocation(funcCall)?.getCallSignatures()[0]?.getParameters()[i]
+                    if(paramType !== undefined){
+
+                        const paramArgType = checker.getTypeOfSymbolAtLocation(paramType,funcCall);
+                        if(!paramArgType.isAny()){
+                            console.log("[analyzer] Using scoped argument", paramArgType.getText(), "for argument", i, "of call", funcCall.getText());
+                            return paramArgType;
+                        }
+                    }
+                }
+                return callExpressionArg;
+            });
             // for(const argument of callExpressionArguments){
             //     console.log(`Arg ${idx} is ${arg.getText()}, type is ${arg.getType()}`);
             // }
             // console.log("Noted call for namespace import", importStringLiteral.getLiteralValue(), getImportSection, callExpressionArguments.map(arg => arg.getType().getText()));
-            libraryCallsRecorder.pushToMap(importStringLiteral.getLiteralValue(), getImportSection, callExpressionArguments.map(arg => arg.getType()));
+            libraryCallsRecorder.pushToMap(importStringLiteral.getLiteralValue(), getImportSection, callArguments);
 
         }
     }
 }
 /**
  * 
+ * @param {tsm.TypeChecker} checker
  * @param {Identifier} importNode 
  * @param {string} mainFilePath 
  * @param {LibraryTypesRecorder} libraryCallsRecorder 
  * @param {StringLiteral} importStringLiteral 
  * @param {boolean} [isDefaultImport=false]
  */
-function recordImportedIdentifierUsage(importNode, mainFilePath, libraryCallsRecorder, importStringLiteral, isDefaultImport = false) {
+function recordImportedIdentifierUsage(checker, importNode, mainFilePath, libraryCallsRecorder, importStringLiteral, isDefaultImport = false) {
     const importRefs = importNode.findReferences();
     for (const importRef of importRefs) {
         const referenceSourceFile = importRef.getDefinition().getSourceFile();
@@ -271,7 +299,7 @@ export function isRelativeModule(moduleName) {
  */
 export function isNodeModule(moduleName) {
     if (moduleName.startsWith('node:')) return true;
-    const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto'];
+    const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto','assert'];
     return nodeModules.includes(moduleName);
 }
 
