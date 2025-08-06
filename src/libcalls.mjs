@@ -5,6 +5,8 @@
 
 import tsm, { Type } from 'ts-morph';
 import { simpleFaker } from '@faker-js/faker'
+
+const LEVEL_LIMIT = 3;
 export class LibraryTypesRecorder {
     /**
      * @type {Map<string,Map<string,Type[][]>>}
@@ -66,8 +68,11 @@ export class LibraryTypesRecorder {
     /**
      * 
      * @param {Type} type 
+     * @param {number} [level=1]
      */
-    instantiateFakerOnType(type) {
+    instantiateFakerOnType(type,level=1) {
+        if(level>LEVEL_LIMIT) return undefined;
+        console.log("Instantiating faker on type", type.getText(), level);
         const literalValue = type.getLiteralValue();
         if(type.isBooleanLiteral()){
             return type.getText() === 'true';
@@ -82,9 +87,15 @@ export class LibraryTypesRecorder {
             return simpleFaker.number.int();
         } else if (type.isBoolean()) {
             return simpleFaker.datatype.boolean();
+        }else if(type.isTuple()){
+            return type.getTupleElements().map(t => this.instantiateFakerOnType(t,level+1));
         } else if (type.isArray()) {
             return []// TODO - handle arrays;
         } else if (type.isObject()) {
+            const f = type.getCallSignatures();
+            if(f.length > 0) {
+                return simpleFaker.helpers.arrayElement(f.map(fn => ()=>this.instantiateFakerOnType(fn.getReturnType(),level+1)));
+            }
             const newObj = {};
             for (const prop of type.getProperties()) {
                 const propName = prop.getName();
@@ -95,11 +106,17 @@ export class LibraryTypesRecorder {
                 } else {
                     propType = this.checker.getTypeOfSymbolAtLocation(prop, declarations[0]);
                 }
-                newObj[propName] = this.instantiateFakerOnType(propType);
+                console.log("Instantiating faker on property", propName, "of type", propType.getText(), "in type", type.getText());
+                newObj[propName] = this.instantiateFakerOnType(propType,level+1);
             }
             // TODO - handle functions
             return newObj;
-        } else {
+        } 
+        else if(type.isUnion()){
+            const types = type.getUnionTypes();
+            return simpleFaker.helpers.arrayElement(types.map(t => this.instantiateFakerOnType(t)));
+        }
+        else {
             console.warn("Unknown type to instantiate", type.getText());
             if (type.isAny()) {
                 return simpleFaker.helpers.arrayElement([
