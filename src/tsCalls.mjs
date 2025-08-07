@@ -85,8 +85,8 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
 
 
         } else if (importDecl.isKind(SyntaxKind.ImportDeclaration)) {// import {x,z} from 'module'; 
-            console.log("Found import declaration", importDecl.getPos());
-            console.log("Named imports", importDecl.getNamedImports().length);
+            // console.log("Found import declaration", importDecl.getPos());
+            // console.log("Named imports", importDecl.getNamedImports().length);
             const namedImports = importDecl.getNamedImports();
 
             for (const namedImport of namedImports) {
@@ -134,7 +134,7 @@ function handleImportForGivenImport(checker, importStringLiteral,namedImport, ma
         console.error("Unhandled named import alias", aliasNode.getText());
 
     }
-    console.log("Named import", namedImport.getNameNode().getText());
+    // console.log("Named import", namedImport.getNameNode().getText());
     const importNode = namedImport.getNameNode();
     if (importNode.isKind(SyntaxKind.StringLiteral)) {
         throw Error("Unexpected string literal import node. Expected identifier");
@@ -156,7 +156,7 @@ function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath,
         const referenceSourceFile = importRef.getDefinition().getSourceFile();
         const comparePath = path.relative(mainFilePath, referenceSourceFile.getFilePath());
         if (comparePath !== '') {
-            console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
+            // console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
             continue;
         }
         // const filePath = referenceSourceFile.getFilePath();
@@ -242,7 +242,7 @@ function recordImportedIdentifierUsage(checker, importNode, mainFilePath, librar
         const referenceSourceFile = importRef.getDefinition().getSourceFile();
         const comparePath = path.relative(mainFilePath, referenceSourceFile.getFilePath());
         if (comparePath !== '') {
-            console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
+            // console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
             continue;
         }
         // const filePath = referenceSourceFile.getFilePath();

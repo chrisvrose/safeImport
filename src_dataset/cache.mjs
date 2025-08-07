@@ -10,7 +10,7 @@ import { resolve } from "node:path";
  * @returns {Promise<T>}
  */
 export async function cacheFunctionOutput(fileName, asyncCallback) {
-    const fileLoc = resolve('./cache', fileName);
+    const fileLoc = resolve('../cache-repos', fileName);
     if (existsSync(fileLoc)) {
         console.log("[cacher] Using cached ", fileLoc);
         const fileContents = (await readFile(fileLoc)).toString();

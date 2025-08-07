@@ -31,5 +31,7 @@ export const FILTER_LIST = [
     "https://github.com/paulmillr/async-each",
     "https://github.com/yarnpkg/yarn/blob/master/packages",
     "https://github.com/substack/semver-compare",
-    "https://github.com/substack/node-archy"
+    "https://github.com/substack/node-archy",
+    "https://github.com/substack/github-from-package",
+    "https://github.com/babel/babel/tree/master/packages/babel-core"
 ];

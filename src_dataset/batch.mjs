@@ -15,7 +15,7 @@ export async function processPromisesBatch(
     asyncCallback,
 ) {
     const results = [];
-    const fileHandle = await open('cache/progress.txt',"w+");
+    const fileHandle = await open('../cache-repos/progress.txt',"w+");
     for (let start = 0; start < items.length; start += limit) {
         const end = start + limit > items.length ? items.length : start + limit;
 
