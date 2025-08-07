@@ -1,53 +1,25 @@
 import wp from 'webpack';
 import path from 'node:path'
+import {createRequire,builtinModules} from 'node:module'
 
-
-if (process.argv[1] === import.meta.filename) {
-    console.log("[SafePack] started");
-    main();
-    console.log("done");
-}
-
-function main() {
-    const ls = [
-        'classnames',
-        'semver',
-        'ansi-styles',
-        // 'debug',
-        // 'supports-color',
-        'chalk',
-        'ms',
-        'minimatch',
-        'strip-ansi',
-        'tslib',
-        'has-flag',
-        'ansi-regex',
-        'color-convert',
-        'color-name',
-        // 'type-fest',
-        'string-width'
-    ];
-
-    ls.forEach(l => {
-
-        wpCompress(l).then(outputFileLocation => {
-            console.log("[wp] success", outputFileLocation);
-        }).catch(err => {
-            console.error("[failed wp]", l);
-            console.error("[wp] error");
-
-        });
-
-
-    });
-}
-
-export function wpCompress(l, outputPath = path.resolve('./output/')) {
+/**
+ * 
+ * @param {string} l library name
+ * @param {string} moduleLocation module location
+ * @param {string} outputPath 
+ * @returns 
+ */
+export function wpCompress(l, moduleLocation,outputPath = path.resolve('./output/')) {
     return new Promise((resolve, reject) => {
-    const libraryLocation = import.meta.resolve(l);
+
+    const libraryLocation = extractFunctionForModule(l, moduleLocation);
     console.log(libraryLocation);
     const outputFile = l + '.bundle.cjs';
-    // throw Error("5");
+    console.log(`[WebPack] Compressing ${l} in ${moduleLocation} to ${outputFile}`);
+    const moduleFallbackMap = builtinModules.reduce((prev, current) => {
+        prev[current] = false;
+        return prev;
+    }, {});
     wp({
         entry: libraryLocation,
         mode: 'production',
@@ -55,12 +27,13 @@ export function wpCompress(l, outputPath = path.resolve('./output/')) {
             mangleExports: false,
             avoidEntryIife: true,
             minimize: false,
-            
+            moduleIds: 'named',
+            concatenateModules: true,
+
         },
         resolve:{
-            fallback:{
-                 "path": false 
-            }
+            modules: [path.join(moduleLocation,'./node_modules')],
+            fallback:moduleFallbackMap
         },
         output: {
             path: outputPath,
@@ -83,5 +56,11 @@ export function wpCompress(l, outputPath = path.resolve('./output/')) {
         }
     });
 });
+}
+function extractFunctionForModule(l, moduleLocation) {
+    const moduleLocationPath = path.resolve(moduleLocation,'package.json');
+    const require = createRequire(moduleLocationPath);
+    const resolved = require.resolve(l)
+    return resolved;
 }
 
