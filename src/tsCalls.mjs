@@ -2,6 +2,7 @@
 import path from 'path';
 import tsm, { Identifier, ImportSpecifier, StringLiteral, SyntaxKind, ts, } from 'ts-morph';
 import { LibraryTypesRecorder } from './libcalls.mjs';
+import {builtinModules} from 'node:module'
 
 /**
  * 
@@ -50,6 +51,7 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                     // const importArgs = importDecl.getArguments();
 
                     const parent = importDecl.getParent();
+                    console.log("Parent of import call", parent?.getKindName(), parent?.getText());
                     if (parent?.isKind(SyntaxKind.VariableDeclaration)) {
                         // this is a variable declaration
                         const varDecl = parent;
@@ -76,9 +78,6 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                         console.log("Variable name", varName);
                         // check if declaration is identifier or object pattern
                     }
-                    console.log("Require arguments. Skipping");
-                    continue;
-                    throw Error("Not implemented yet");
                 }
             }
 
@@ -298,8 +297,11 @@ export function isRelativeModule(moduleName) {
  * @returns
  */
 export function isNodeModule(moduleName) {
-    if (moduleName.startsWith('node:')) return true;
-    const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto','assert'];
-    return nodeModules.includes(moduleName);
+    if (builtinModules.includes(moduleName) ) return true;
+    if (moduleName.startsWith('node:')) {
+        return builtinModules.includes(moduleName.substring(5));// strip node: prefix
+    }
+    // const nodeModules = ['fs', 'fs/promises', 'path', 'http', 'https', 'os', 'crypto','assert'];
+    // return nodeModules.includes(moduleName);
 }
 

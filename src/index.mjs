@@ -11,8 +11,9 @@ import { LibraryTypesRecorder } from './libcalls.mjs';
 /**
  * 
  * @param {ReturnType<LibraryTypesRecorder['generateAllArgumentsForRecordedCalls']>} calls 
+ * @param {string} folderPath
  */
-export async function sliceAndWriteCalls(calls) {
+export async function sliceAndWriteCalls(calls, folderPath) {
     const writePromises = [];
 
     for (const [moduleName, callBox] of calls) {
@@ -24,8 +25,9 @@ export async function sliceAndWriteCalls(calls) {
 
         // const relatedModuleNamePath = import.meta.resolve(moduleName);
         // console.log(`Related module path`, relatedModuleNamePath);
-
-        const relatedModuleNamePath = await wpCompress(moduleName)
+        console.log("[wp] Compressing module", moduleName);
+        // throw Error("Module slicing not implemented yet");
+        const relatedModuleNamePath = await wpCompress(moduleName,folderPath );
         const fileSource = readFileSync(relatedModuleNamePath).toString('utf-8');
         // continue; // TODO - handle relative modules
         const { slicedCode } = getSliceAndInfoSync(fileSource, (moduleExports) => {
@@ -66,11 +68,12 @@ export async function sliceAndWriteCalls(calls) {
     }).catch(console.log);
 }
 
+// is-glob WORKED
 /**
  * 
  * @param {string} filePath 
  */
-function driver(folderPath = './test_src/anymatch') {
+function driver(folderPath = './candidates/braces') {
     // const FILE_PATH = './test_src/index.cjs';
 
     const project = new Project({ compilerOptions: { allowJs: true, checkJs: false, } });
@@ -96,15 +99,19 @@ function driver(folderPath = './test_src/anymatch') {
     const callMap = libraryTypesRecorder.generateAllArgumentsForRecordedCalls();
 
 
-    logCallList(callMap, 'FakeModuleName');
-    sliceAndWriteCalls(callMap).then(() => {
+    logCallList(callMap, folderPath);
+    sliceAndWriteCalls(callMap, folderPath).then(() => {
         console.log("Slicing and writing calls done");
     });
 }
 
 if (process.argv[1] === import.meta.filename) {
-    console.log("[SafeImport] started");
-    driver();
+    if(process.argv.length >2 && process.argv[2] !== '') {
+        console.log(`[SafeImport] started ${process.argv[2]}`);
+        driver(process.argv[2]);
+    }else{
+        console.log("[SafeImport] started");
+    driver();}
 }
 
 

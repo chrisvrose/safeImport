@@ -113,9 +113,6 @@ describe('Instantiation tests',function () {
         console.log(ans);
         assert.isArray(ans);
         assert.isArray([10, 'a'], ans);
-        // assert.isBoolean(ans.x);
-        // assert.isObject(ans.parent);
-        // assert.isNumber(ans.data);
 
     })
 
