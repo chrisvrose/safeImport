@@ -26,7 +26,7 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
             // the declaration is callExpression. Verify its based an identifier aliasing import or require
             const importExpr = importDecl.getExpression();
             const type = checker.getTypeAtLocation(importExpr);
-            console.log("Type of import expression", checker.getTypeText(type));
+            // console.log("Type of import expression", checker.getTypeText(type));
             // console.log(importExpr);
             if (importExpr.isKind(SyntaxKind.Identifier)) {
                 // import is a require or import
@@ -51,7 +51,9 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                     // const importArgs = importDecl.getArguments();
 
                     const parent = importDecl.getParent();
-                    console.log("Parent of import call", parent?.getKindName(), parent?.getText());
+                    if(!parent?.isKind(SyntaxKind.VariableDeclaration)) {
+                        console.log("Parent of import call", parent?.getKindName(), parent?.getText());
+                    }
                     if (parent?.isKind(SyntaxKind.VariableDeclaration)) {
                         // this is a variable declaration
                         const varDecl = parent;
@@ -72,10 +74,10 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                                     console.warn("Nested binding pattern not handled yet", destructuredElementName.getText());
                                 } else {
                                     console.error("Unexpected destructured element", destructuredElementName.getText());
+                                    // console.log("Variable name", varName);
                                 }
                             }
                         }
-                        console.log("Variable name", varName);
                         // check if declaration is identifier or object pattern
                     }
                 }
@@ -157,7 +159,6 @@ function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath,
             console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
             continue;
         }
-        console.log("Compare path", comparePath === '');
         // const filePath = referenceSourceFile.getFilePath();
         // console.log("Refset for import",filePath);
         for (const ref of importRef.getReferences()) {
@@ -176,7 +177,7 @@ function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath,
             if(callExpression?.getExpression().getDescendantsOfKind(SyntaxKind.Identifier).some(id=>id===ref.getNode())){
                 // asserted that the call expression is using the importNode
                 if(callExpression.getExpression().isKind(SyntaxKind.PropertyAccessExpression)){
-                    console.log("Used a submethod of import", ref.getNode().getText(),callExpression.getExpression().getText());
+                    // console.log("Used a submethod of import", ref.getNode().getText(),callExpression.getExpression().getText());
                     // ref.getNode().getText();
                     const expressionImportSection = callExpression.getExpression().getText().split('.');
                     expressionImportSection.shift();
@@ -244,7 +245,6 @@ function recordImportedIdentifierUsage(checker, importNode, mainFilePath, librar
             console.warn("Skipping import reference from other file", referenceSourceFile.getFilePath());
             continue;
         }
-        console.log("Compare path", comparePath === '');
         // const filePath = referenceSourceFile.getFilePath();
         // console.log("Refset for import",filePath);
         for (const ref of importRef.getReferences()) {

@@ -33,7 +33,6 @@ export async function sliceAndWriteCalls(calls, folderPath) {
         const { slicedCode } = getSliceAndInfoSync(fileSource, (moduleExports) => {
             return [...callBox.entries()].flatMap(([methodName, methodArgsList]) => {
                 const methodNameNormed = methodName.substring(1);
-                console.log("Calls for ", methodNameNormed, methodArgsList);
                 return methodArgsList.map(methodArgsList => {
                     const methodObj = (methodNameNormed === '') ? moduleExports : moduleExports[methodNameNormed];
                     if(methodObj === undefined) {
@@ -85,7 +84,7 @@ function driver(folderPath = './candidates/braces') {
     const libraryTypesRecorder = new LibraryTypesRecorder(project.getTypeChecker());
     // const project = tsc.createProgram([FILE_PATH],);
     const checker = project.getTypeChecker();
-    console.log(`Source files found: ${sourceFiles.length}`, ...sourceFiles.map(sf => sf.getFilePath()));
+    console.log(`Source files found: ${sourceFiles.length}`);
     for (const sourceFile of sourceFiles) {
         const filePath = sourceFile.getFilePath();
         console.log(`[analyzer] Processing file: ${filePath}`);
@@ -99,7 +98,7 @@ function driver(folderPath = './candidates/braces') {
     const callMap = libraryTypesRecorder.generateAllArgumentsForRecordedCalls();
 
 
-    logCallList(callMap, folderPath);
+    // logCallList(callMap, folderPath);
     sliceAndWriteCalls(callMap, folderPath).then(() => {
         console.log("Slicing and writing calls done");
     });

@@ -72,7 +72,7 @@ export class LibraryTypesRecorder {
      */
     instantiateFakerOnType(type,level=1) {
         if(level>LEVEL_LIMIT) return undefined;
-        console.log("Instantiating faker on type", type.getText(), level);
+        // console.log("Instantiating faker on type", type.getText(), level);
         const literalValue = type.getLiteralValue();
         if(type.isBooleanLiteral()){
             return type.getText() === 'true';
@@ -102,11 +102,11 @@ export class LibraryTypesRecorder {
                 const declarations = prop.getDeclarations();
                 let propType = prop.getDeclaredType();
                 if (declarations.length !== 1) {
-                    console.warn("Multiple declarations for property", propName, "in type", type.getText());
+                    // console.warn("Multiple declarations for property", propName, "in type", type.getText());
                 } else {
                     propType = this.checker.getTypeOfSymbolAtLocation(prop, declarations[0]);
                 }
-                console.log("Instantiating faker on property", propName, "of type", propType.getText(), "in type", type.getText());
+                // console.log("Instantiating faker on property", propName, "of type", propType.getText(), "in type", type.getText());
                 newObj[propName] = this.instantiateFakerOnType(propType,level+1);
             }
             // TODO - handle functions
@@ -117,7 +117,6 @@ export class LibraryTypesRecorder {
             return simpleFaker.helpers.arrayElement(types.map(t => this.instantiateFakerOnType(t)));
         }
         else {
-            console.warn("Unknown type to instantiate", type.getText());
             if (type.isAny()) {
                 return simpleFaker.helpers.arrayElement([
                     simpleFaker.string.sample(),
@@ -127,6 +126,7 @@ export class LibraryTypesRecorder {
                     []
                 ]);
             }
+            console.warn("Unknown type to instantiate", type.getText());
             return undefined;
         }
 
