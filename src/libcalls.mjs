@@ -80,7 +80,11 @@ export class LibraryTypesRecorder {
             return literalValue;
         } else if (type.isUndefined()) {
             return undefined;
-        } else if (type.isString()) {
+        } else if(type.isNull()){
+            return null;
+        } else if(type.isBigInt()){
+            return simpleFaker.number.bigInt();
+        }else if (type.isString()) {
             
             return simpleFaker.string.alphanumeric();
         } else if (type.isNumber()) {

@@ -30,9 +30,9 @@ const intermediateRepoList = await cacheFunctionOutput('repos.json', async funct
 // const packageMap = new Map(packageList)
 
 console.log(`Total repos`,intermediateRepoList.length)
-const intermediateRepoListSmaller = intermediateRepoList.slice(0,4000);
+const intermediateRepoListSmaller = intermediateRepoList.slice(0,5000);
 
-const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,20,cloneRepoAndCheck)
+const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,15,cloneRepoAndCheck)
 
 const repoStatusString = csv.stringify(repoStatus);
 await fsp.writeFile('repostatus.csv', repoStatusString);

@@ -1,10 +1,10 @@
-export const FILTER_LIST = [
+import GlobToRegExp from "glob-to-regexp";
+
+const FILTER_LIST = [
+    "https://github.com/substack/*",
     "https://gitlab.com/contexttesting/zoroaster.git",
     "https://github.com/Eternity-Bots",
     "https://github.com/node-x-extras/x-path",
-    "https://github.com/substack/node-x256",
-    "https://github.com/substack/node-wordwrap",
-
     "https://github.com/zkochan/packages/blob/main/which-pm-runs",
     "https://github.com/webpack-contrib/webpack-addons",
     "https://github.com/zznoillusion1026/MyImage",
@@ -15,23 +15,34 @@ export const FILTER_LIST = [
     "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.scandir",
     "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.walk",
     "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.macchiato",
-    "https://github.com/substack/text-table",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-object-rest-spread",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-optional-catch-binding",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-async-generators",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-optional-chaining",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-json-strings",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-nullish-coalescing-operator",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-bigint",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-dynamic-import",
-    "https://github.com/substack/node-commondir",
-    "https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-export-namespace-from",
-    "https://github.com/substack/https-browserify",
-    "https://github.com/babel/babel/tree/master/packages/babel-runtime",
     "https://github.com/paulmillr/async-each",
     "https://github.com/yarnpkg/yarn/blob/master/packages",
-    "https://github.com/substack/semver-compare",
-    "https://github.com/substack/node-archy",
-    "https://github.com/substack/github-from-package",
-    "https://github.com/babel/babel/tree/master/packages/babel-core"
+    "https://github.com/emotion-js/emotion/tree/master/packages/stylis",
+    "https://github.com/kogosoftwarellc/open-api/tree/master/packages/openapi-types",
+    "https://github.com/thenativeweb/boolean",
+    "https://github.com/zkochan/packages/tree/master/read-yaml-file",
+    "https://github.com/johnotander/rgba-regex",
+    "https://github.com/adobe/react-spectrum/tree/main/packages/@internationalized/date",
+    "https://github.com/pnpm/pnpm/blob/main/packages",
+    "https://github.com/jhermsmeier/node-scuid",
+    "https://github.com/emotion-js/emotion/tree/master/packages/babel-plugin-emotion",
+    "https://github.com/emotion-js/emotion/tree/master/removed-packages/core",
+    "https://github.com/babel/babel/tree/master/packages/*",
+    "https://github.com/pugjs/pug/tree/master/packages/*",
+    "https://github.com/zkochan/packages/tree/master/*",
+    "https://github.com/Marak/Faker.js",
+    "https://github.com/ethanent/phin",
+    "https://github.com/Popmotion/popmotion/tree/master/packages/*",
+    "https://github.com/gulpjs/copy-prop"
 ];
+
+const FILTER_LIST_REGEX = FILTER_LIST.map(GlobToRegExp)
+
+/**
+ * 
+ * @param {string} repoUrl 
+ * @returns 
+ */
+export function matchFilterList(repoUrl) {
+    return FILTER_LIST_REGEX.some(filter => filter.test(repoUrl));
+}

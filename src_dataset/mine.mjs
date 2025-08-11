@@ -3,7 +3,7 @@ import { lstat, readFile,rm } from 'fs/promises'
 import git from 'git-client'
 import { resolve } from 'path'
 import int from 'set.prototype.intersection';
-import { FILTER_LIST } from './FILTER_LIST.mjs';
+import { matchFilterList } from './FILTER_LIST.mjs';
 /**
  * 
  * @param {[string,string,number]} param0 
@@ -12,7 +12,7 @@ import { FILTER_LIST } from './FILTER_LIST.mjs';
 export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     const repoPath = resolve('../cache-repos/repos', repoName)
 
-    if (FILTER_LIST.includes(repoGitUrl)) {
+    if (filterRepo(repoGitUrl)) {
         console.log("[git] ignoring ", repoName)
         return [repoName, null]
     };
@@ -44,6 +44,12 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     }
     else return [repoName, null]
 }
+
+
+function filterRepo(repoGitUrl) {
+    return matchFilterList(repoGitUrl);
+}
+
 function hasAnyActualDependencies(packageJSONContents, repoName) {
     if (packageJSONContents.dependencies !== undefined && Object.keys(packageJSONContents.dependencies).length > 0) {
         return true;
