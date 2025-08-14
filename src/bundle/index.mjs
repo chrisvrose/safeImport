@@ -15,7 +15,7 @@ export function wpCompress(l, moduleLocation,outputPath = path.resolve('./output
     const libraryLocation = extractFunctionForModule(l, moduleLocation);
     console.log(libraryLocation);
     const outputFile = l + '.bundle.cjs';
-    console.log(`[WebPack] Compressing ${l} in ${moduleLocation} to ${outputFile}`);
+    console.log(`[WebPack] Compressing ${l} in ${moduleLocation} to ${path.join(outputPath, outputFile)}`);
     const moduleFallbackMap = builtinModules.reduce((prev, current) => {
         prev[current] = false;
         return prev;
@@ -48,8 +48,8 @@ export function wpCompress(l, moduleLocation,outputPath = path.resolve('./output
         },
     }, (err, stats) => {
         if (err || stats.hasErrors()) {
-            console.error(`[WebPack] Error Stack`,err?.stack);
-            console.log(`[WebPack]`,stats?.toJson().errors);
+            console.error(`[WebPack] Error encountered`);
+            // console.log(`[WebPack]`,stats?.toJson().errors);
             reject(err || stats);
         }else{
             resolve(path.resolve(outputPath, outputFile));

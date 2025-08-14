@@ -53,6 +53,38 @@ export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePat
                     const parent = importDecl.getParent();
                     if(!parent?.isKind(SyntaxKind.VariableDeclaration)) {
                         console.log("Parent of import call", parent?.getKindName(), parent?.getText());
+                        // Check to see if there is a declaration of type:
+                        // const x = require('something').x;
+                        // or else, drop it. 
+                        if(parent?.isKind(SyntaxKind.PropertyAccessExpression)){
+                            // this is a property access expression
+                            const propAccessExpr = parent;
+                            const propAccessName = propAccessExpr.getName();
+                            const propAccessNameNode = propAccessExpr.getNameNode();
+
+                            if (propAccessNameNode.isKind(SyntaxKind.Identifier)) {
+                                // assert that the parent of the property access is a variable declaration
+                                const parentVarDecl = propAccessExpr.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
+                                if (parentVarDecl !== undefined) {
+                                    // this is a variable declaration
+                                    const varName = parentVarDecl.getName();
+                                    if (varName === propAccessName) {
+                                        const varNameNode = parentVarDecl.getNameNode();
+                                        if(varNameNode.isKind(SyntaxKind.Identifier)) {
+                                            recordImportedIdentifierUsage(checker, varNameNode, mainFilePath, libraryTypesRecorder, importStringDecl);
+                                        }
+                                    }else{
+                                        console.warn("Variable name does not match property access name", varName, propAccessName);
+                                    }
+                                }
+                                    // console.error("Property access expression is not a variable declaration", propAccessExpr.getText());
+                                // this is a property access expression with identifier
+                            }else{
+                                console.log("Property access name", propAccessName);
+                            }
+                            
+                        }
+
                     }
                     if (parent?.isKind(SyntaxKind.VariableDeclaration)) {
                         // this is a variable declaration
@@ -196,7 +228,7 @@ function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath,
                 continue;
             }
             const callExpressionArguments = callExpression?.getArguments();
-            if (callExpressionArguments === undefined || callExpressionArguments.length === 0) {
+            if (callExpressionArguments === undefined || !Array.isArray( callExpressionArguments)) {
                 console.warn("No call expressions found for import reference", ref.getNode().getText());
                 continue;
             }
@@ -211,7 +243,7 @@ function recordNamespaceImportIdentifierUsage(checker, importNode, mainFilePath,
 
                         const paramArgType = checker.getTypeOfSymbolAtLocation(paramType,funcCall);
                         if(!paramArgType.isAny()){
-                            console.log("[analyzer] Using scoped argument", paramArgType.getText(), "for argument", i, "of call", funcCall.getText());
+                            // console.log("[analyzer] Using scoped argument", paramArgType.getText(), "for argument", i, "of call", funcCall.getText());
                             return paramArgType;
                         }
                     }

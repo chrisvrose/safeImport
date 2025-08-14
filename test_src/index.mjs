@@ -1,4 +1,4 @@
-import fs,{readFile} from 'node:fs'
+import fs,{readFile} from 'node:fs' with {abc: 'xyz'};
 
 import classnames from 'classnames'
 // import * as s from 'esprima'

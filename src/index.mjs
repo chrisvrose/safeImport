@@ -12,13 +12,14 @@ import { LibraryTypesRecorder } from './libcalls.mjs';
  * 
  * @param {ReturnType<LibraryTypesRecorder['generateAllArgumentsForRecordedCalls']>} calls 
  * @param {string} folderPath
+ * @param {string} rootModule
  */
-export async function sliceAndWriteCalls(calls, folderPath) {
+export async function sliceAndWriteCalls(calls, folderPath, rootModule) {
     const writePromises = [];
 
     for (const [moduleName, callBox] of calls) {
         if (isRelativeModule(moduleName) || isNodeModule(moduleName)) { // not relative module
-            console.warn(`Skipping module ${moduleName} - relative or inbuilt Node.js module`);
+            // console.warn(`Skipping module ${moduleName} - relative or inbuilt Node.js module`);
             continue;
         }
         console.log(`Slicing module ${moduleName} - ${callBox.size} calls`);
@@ -51,20 +52,41 @@ export async function sliceAndWriteCalls(calls, folderPath) {
 
         // console.log(`Sliced code ${moduleName}\n`,slicedCode);
         // continue;
-        const writePath = path.resolve('./dist', moduleName, 'index.cjs');
+        const writePath = path.resolve('./dist',rootModule, moduleName, 'index.cjs');
         if (writePath === moduleName) {
             throw Error("Unexpected Directory rewrite. Not allowed.");
         }
+        const { packageJsonFilePath, packageJsonFileContentsString } = createPackageJsonForModule(moduleName, writePath);
+        
         mkdirSync(path.dirname(writePath), { recursive: true });
         console.log(`Writing module '${moduleName}' to '${writePath}'`);
-
-        writePromises.push(writeFile(writePath, slicedCode));
+        
+        writePromises.push(writeFile(packageJsonFilePath, packageJsonFileContentsString),
+            writeFile(writePath, slicedCode));
+        // writePromises.push(writeFile(writePath, slicedCode));
 
     }
 
     Promise.all(writePromises).then(p => {
         // console.log("write finished");
     }).catch(console.log);
+}
+
+function createPackageJsonForModule(moduleName, writePath) {
+    const packageJsonFileContents = {
+        "name": moduleName,
+        "version": "1.0.0",
+        "main": "index.cjs",
+        "scripts": {
+            "test": "echo \"Error: no test specified\" && exit 1"
+        },
+        "author": "",
+        "license": "ISC",
+        "description": ""
+    };
+    const packageJsonFileContentsString = JSON.stringify(packageJsonFileContents, null, 2);
+    const packageJsonFilePath = path.resolve(path.dirname(writePath), 'package.json');
+    return { packageJsonFilePath, packageJsonFileContentsString };
 }
 
 // is-glob WORKED
@@ -97,9 +119,9 @@ function driver(folderPath = './candidates/braces') {
 
     const callMap = libraryTypesRecorder.generateAllArgumentsForRecordedCalls();
 
-
+    const moduleBaseName = path.basename(folderPath);
     // logCallList(callMap, folderPath);
-    sliceAndWriteCalls(callMap, folderPath).then(() => {
+    sliceAndWriteCalls(callMap, folderPath,moduleBaseName).then(() => {
         console.log("Slicing and writing calls done");
     });
 }
@@ -135,6 +157,8 @@ function constructJavascriptGlobInFolder(folderPath) {
         ["**/tests/**", false],
         ["**/__tests__/**", false],
         ["**/__mocks__/**", false],
+        ["**/test.js", false],
+        ["**/tests.js", false],
     ].map(glob => {
         const prefix = glob[1] ? '' : '!';
         return prefix+path.resolve(folderPath, glob[0])});

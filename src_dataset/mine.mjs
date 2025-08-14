@@ -28,6 +28,7 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
 
     const packageFile = resolve(repoPath, 'package.json')
     if (!existsSync(packageFile)) return [repoName, null];
+    // console.log("[git] checking", repoName, "for dependencies at ", packageFile);
     const packageJSONContentsString = (await readFile(packageFile)).toString()
 
     // console.log(packageJSONContentsString);
@@ -58,7 +59,7 @@ function hasAnyActualDependencies(packageJSONContents, repoName) {
 }
 
 function checkTestingDependencies(packageJSONContents, repoName) {
-    const testingLibraries = new Set(['mocha']);
+    const testingLibraries = new Set(['mocha','jest']);
     const dependencies = new Set();
     if (packageJSONContents.dependencies !== undefined) {
         for (const dep of Object.keys(packageJSONContents.dependencies)) {

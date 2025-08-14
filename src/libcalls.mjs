@@ -95,7 +95,13 @@ export class LibraryTypesRecorder {
             return type.getTupleElements().map(t => this.instantiateFakerOnType(t,level+1));
         } else if (type.isArray()) {
             return []// TODO - handle arrays;
+            //also, check if its a buffer from NodeJS
         } else if (type.isObject()) {
+            // TODO check if its a buffer
+            if (type.getText() === 'Buffer') {
+                return Buffer.from(simpleFaker.string.alphanumeric(10));
+            }
+
             const f = type.getCallSignatures();
             if(f.length > 0) {
                 return simpleFaker.helpers.arrayElement(f.map(fn => ()=>this.instantiateFakerOnType(fn.getReturnType(),level+1)));

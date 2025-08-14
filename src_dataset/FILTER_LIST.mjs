@@ -17,7 +17,6 @@ const FILTER_LIST = [
     "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.macchiato",
     "https://github.com/paulmillr/async-each",
     "https://github.com/yarnpkg/yarn/blob/master/packages",
-    "https://github.com/emotion-js/emotion/tree/master/packages/stylis",
     "https://github.com/kogosoftwarellc/open-api/tree/master/packages/openapi-types",
     "https://github.com/thenativeweb/boolean",
     "https://github.com/zkochan/packages/tree/master/read-yaml-file",
@@ -25,7 +24,6 @@ const FILTER_LIST = [
     "https://github.com/adobe/react-spectrum/tree/main/packages/@internationalized/date",
     "https://github.com/pnpm/pnpm/blob/main/packages",
     "https://github.com/jhermsmeier/node-scuid",
-    "https://github.com/emotion-js/emotion/tree/master/packages/babel-plugin-emotion",
     "https://github.com/emotion-js/emotion/tree/master/removed-packages/core",
     "https://github.com/babel/babel/tree/master/packages/*",
     "https://github.com/pugjs/pug/tree/master/packages/*",
@@ -33,7 +31,11 @@ const FILTER_LIST = [
     "https://github.com/Marak/Faker.js",
     "https://github.com/ethanent/phin",
     "https://github.com/Popmotion/popmotion/tree/master/packages/*",
-    "https://github.com/gulpjs/copy-prop"
+    "https://github.com/gulpjs/copy-prop",
+    "https://github.com/netlify/serverless-functions-api",
+    "https://github.com/igoradamenko/esbuild-plugin-alias",
+    "https://github.com/emotion-js/emotion/tree/master/packages/*",
+    "https://github.com/jhermsmeier/node-http-link-header"
 ];
 
 const FILTER_LIST_REGEX = FILTER_LIST.map(GlobToRegExp)

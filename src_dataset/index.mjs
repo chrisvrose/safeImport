@@ -6,7 +6,7 @@ import { processPromisesBatch } from './batch.mjs';
 
 
 
-const intermediateRepoList = await cacheFunctionOutput('repos.json', async function () {
+const intermediateRepoList = await cacheFunctionOutput('repos.n2.json', async function () {
     const [packagesM, packageReposM] = await Promise.all([
         import('download-counts', { with:{type: 'json'}}),
         import('all-the-package-repos', { with: { type: 'json' } })
@@ -15,7 +15,7 @@ const intermediateRepoList = await cacheFunctionOutput('repos.json', async funct
     const packageRepos = packageReposM.default;
 
     const packageList = Object.keys(packages).map(e => [e, packages[e]])
-        .filter(e => e[1] > 100).filter(e => !e[0].startsWith("@types/"))
+        .filter(e => e[1] > 100_000).filter(e => !e[0].startsWith("@types/")).filter(e => !e[0].startsWith("@webassemblyjs/")) // filter out typescript packages and @types packages
     console.log('packagelist', packageList.length)
     /**
      * @type {[string,string,number][]} repo, link count
@@ -30,9 +30,9 @@ const intermediateRepoList = await cacheFunctionOutput('repos.json', async funct
 // const packageMap = new Map(packageList)
 
 console.log(`Total repos`,intermediateRepoList.length)
-const intermediateRepoListSmaller = intermediateRepoList.slice(0,5000);
+const intermediateRepoListSmaller = intermediateRepoList.slice(0,6000);
 
-const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,15,cloneRepoAndCheck)
+const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,10,cloneRepoAndCheck)
 
 const repoStatusString = csv.stringify(repoStatus);
 await fsp.writeFile('repostatus.csv', repoStatusString);
