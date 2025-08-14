@@ -2,6 +2,7 @@ debug,npm run test:node && npm run test:browser && npm run lint
 glob-parent,nyc mocha --async-only
 js-yaml,npm run lint && mocha
 fs-extra,npm run lint && npm run unit && npm run unit-esm
+cross-spawn,jest --env node --coverage
 iconv-lite,mocha --reporter spec --grep .
 braces,mocha -r ./test/mocha-initialization.js
 fill-range,npm run lint && npm run mocha
@@ -42,6 +43,7 @@ through2,npm run lint && npm run test:node && npm run test:browser
 css-tree,mocha lib/__tests --require lib/__tests/helpers/setup.js --reporter progress
 psl,mocha test/*.spec.js
 proxy-addr,mocha --reporter spec --bail --check-leaks test/
+prop-types,npm run tests-only
 babel-plugin-istanbul,cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha --timeout 5000 test/*.js
 @humanwhocodes/config-array,mocha -r esm tests/ --recursive
 jsdom,npm-run-all --continue-on-error test:*
@@ -69,7 +71,9 @@ color,xo && tsd && mocha
 @webassemblyjs/ieee754,make test
 @webassemblyjs/utf8,make test
 @webassemblyjs/floating-point-hex-parser,make test
+@babel/preset-modules,eslint src test && jest --colors
 url-parse,c8 --reporter=lcov --reporter=text mocha test/test.js
+jsx-ast-utils,npm run tests-only --
 @cspotcode/source-map-support,mocha
 simple-swizzle,mocha --compilers coffee:coffee-script/register
 global-prefix,mocha
@@ -78,11 +82,14 @@ compression,mocha --check-leaks --reporter spec
 @aws-crypto/util,lerna run test
 compressible,mocha --reporter spec --bail --check-leaks test/
 regenerator-transform,test/run.sh
+css-loader,npm run test:coverage
 @aws-crypto/sha256-js,lerna run test
 url,npm run tests-only
 ejs,npx jake test
 global-modules,mocha
 @webassemblyjs/helper-numbers,make test
+postcss-modules-local-by-default,yarn test:coverage
+postcss-modules-scope,yarn test:coverage
 thenify,mocha --reporter spec
 ecdsa-sig-formatter,istanbul cover --root src _mocha -- spec
 mz,mocha --reporter spec
@@ -90,6 +97,7 @@ thenify-all,mocha --reporter spec
 rechoir,nyc mocha --async-only
 eslint-plugin-prettier,pnpm lint && mocha
 hoist-non-react-statics,nyc mocha tests/unit/ --recursive --reporter spec --require=@babel/register
+postcss-modules-values,yarn test:coverage
 clone-deep,mocha
 shallow-clone,mocha
 handlebars,npm run test:mocha
@@ -103,11 +111,16 @@ expand-brackets,mocha
 node-gyp,cross-env NODE_GYP_NULL_LOGGER=true mocha --timeout 15000 test/test-download.js test/test-*
 extglob,mocha
 fd-slicer,mocha --reporter spec --check-leaks
+cli-table3,jest --color
+react-transition-group,npm run lint && npm run testonly
+safe-regex,jest src/*
 http-proxy,nyc --reporter=text --reporter=lcov npm run mocha
 promise,mocha --bail --timeout 200 --slow 99999 -R dot && npm run test-memory-leak
 set-value,mocha
 csso,mocha test --reporter ${REPORTER:-progress}
 promise-retry,mocha --bail -t 10000
+react-router,jest
+postcss-loader,npm run test:coverage
 object.pick,mocha
 language-tags,c8 mocha
 d3-array,mocha 'test/**/*-test.js' && eslint src test
@@ -121,6 +134,7 @@ archiver-utils,mocha --reporter dot
 object-visit,mocha
 collection-visit,mocha
 map-visit,mocha
+react-router-dom,jest
 pascalcase,mocha
 object-copy,mocha
 static-extend,mocha
@@ -135,14 +149,17 @@ snapdragon,mocha
 nanomatch,mocha
 class-utils,mocha
 selfsigned,mocha -t 5000
+sass-loader,npm run test:coverage
 snapdragon-util,mocha
 hash.js,mocha --reporter=spec test/*-test.js && npm run lint
 lie,npm run jshint && mocha -R nyan ./test/cover.js && tsc --noEmit ./test/types.ts
 elliptic,npm run lint && npm run unit
 asn1.js,mocha --reporter spec test/*-test.js && cd rfc/2560 && npm i && npm test && cd ../../rfc/5280 && npm i && npm test && cd ../../ && npm run lint
+html-minifier-terser,npm run test:node
 serve-index,mocha --reporter spec --bail --check-leaks test/
 d3-shape,mocha 'test/**/*-test.js' && eslint src test
 relateurl,c8 mocha test.js --bail --check-leaks
+lint-staged,cross-env NODE_OPTIONS=--experimental-vm-modules npx jest --coverage
 d3-interpolate,mocha 'test/**/*-test.js' && eslint src test
 pretty-error,"mocha ""test/**/*.coffee"""
 spdy,mocha --reporter=spec test/*-test.js
@@ -159,8 +176,10 @@ des.js,NODE_OPTIONS=--openssl-legacy-provider mocha --reporter=spec test/*-test.
 d3-time-format,TZ=America/Los_Angeles mocha 'test/**/*-test.js' && eslint src test
 d3-scale,TZ=America/Los_Angeles mocha 'test/**/*-test.js' && eslint src test
 json-bigint,./node_modules/mocha/bin/mocha -R spec --check-leaks test/*-test.js
+formidable,pnpm run audit && node --test ./test-node/**/*.test.js && pnpm run test-jest:ci
 dom-converter,"mocha ""test/**/*.coffee"""
 expand-tilde,mocha
+file-loader,npm run test:coverage
 archiver,mocha --reporter dot
 homedir-polyfill,mocha
 zip-stream,mocha --reporter dot
@@ -172,7 +191,9 @@ linkify-it,npm run lint && npm run build && c8 --exclude build --exclude test -r
 one-time,nyc --reporter=text --reporter=json-summary npm run test:runner
 colorspace,mocha test.js
 resolve-dir,mocha
+yargs-unparser,jest --env node --coverage
 @dabh/diagnostics,nyc --reporter=text --reporter=lcov npm run test:runner
+warning,npm run test:dev && npm run test:prod
 @parcel/watcher,mocha
 findup-sync,nyc mocha --async-only
 duplexer2,mocha -R tap
@@ -180,16 +201,21 @@ compare-func,npm run-script lint && mocha
 markdown-it,npm run lint && CJS_ONLY=1 npm run build && c8 --exclude dist --exclude test -r text -r html -r lcov mocha && node support/specsplit.mjs
 notifications-node-client,"mocha ""spec/**/*.js"" && npm run test:markdown:standard"
 basic-auth,mocha --reporter spec --bail --check-leaks test/
+portfinder,jest --runInBand
 @img/sharp-linux-x64,npm run test-lint && npm run test-unit && npm run test-licensing && npm run test-types
+@remix-run/router,jest
 connect,mocha --require test/support/env --reporter spec --bail --check-leaks test/
 needle,mocha test
 ts-loader,git clean -xfd test/comparison-tests && git clean -xfd test/execution-tests && node test/run-tests.js
+polished,jest src
 @aws-crypto/crc32c,lerna run test
 @aws-crypto/sha1-browser,lerna run test
 aws-sdk,node ./scripts/composite-test.js
 for-own,mocha
 sinon,npm run test-node && npm run test-headless && npm run test-webworker
 md5,mocha
+source-map-loader,npm run test:coverage
+node-notifier,jest
 nodemon,npm run lint && npm run spec
 sane,npm run format && eslint src/ test/ index.js && mocha --bail test/test.js && mocha --bail test/utils-test.js && mocha --bail 'test/watchexec_*-test.js'
 @parcel/watcher-linux-x64-glibc,mocha
@@ -203,13 +229,18 @@ write,mocha
 coa,nyc mocha
 multer,mocha --reporter spec --exit --check-leaks test/
 redis-parser,nyc --cache --preserve-comments mocha -- -R spec && nyc report --reporter=html
+webpack-bundle-analyzer,npm run install-test-webpack-versions && jest --runInBand
 eslint-plugin-es,npm run -s test:mocha
 @parcel/watcher-linux-x64-musl,mocha
 temp,mocha test/temp-test.js
 recursive-readdir,mocha test/
 path-root,mocha
 lazy-cache,mocha
+eslint-plugin-promise,jest --coverage
 nise,mocha lib/**/*.test.js
+css-to-react-native,jest
+react-smooth,cross-env BABEL_ENV=test jest
+url-loader,npm run test:coverage
 router,mocha --reporter spec --check-leaks test/
 parse-filepath,mocha
 vinyl,nyc mocha --async-only
@@ -217,12 +248,15 @@ css,mocha --require should --reporter spec test/*.js
 node-dir,./node_modules/.bin/mocha --reporter spec
 request-progress,mocha --bail
 streamroller,nyc --check-coverage mocha
+yarn,yarn lint && yarn test-only
 currently-unhandled,xo && nyc ava
 @webassemblyjs/wast-parser,make test
 @webassemblyjs/helper-code-frame,make test
 @webassemblyjs/helper-fsm,make test
 @webassemblyjs/helper-module-context,make test
 isomorphic-fetch,jshint `npm run -s files` && lintspaces -i js-comments -e .editorconfig `npm run -s files` && mocha
+jscodeshift,jest --bail
+jest-junit,jest
 d3-transition,mocha 'test/**/*-test.js' && eslint src test
 @cypress/xvfb,eslint **/*.js && mocha
 morgan,mocha --check-leaks --reporter spec
@@ -235,15 +269,21 @@ browser-resolve,node scripts/setup-symlinks.js && mocha --reporter list test/*.j
 wait-on,npm run lint && npm run test:mocha
 chromium-bidi,wireit
 d3-zoom,mocha 'test/**/*-test.js' && eslint src test
+@pnpm/npm-conf,jest
 babel-eslint,npm run lint && npm run test-only
+rollup-plugin-terser,jest
+@tailwindcss/typography,jest
 @aws-crypto/ie11-detection,lerna run test
 nock,nyc --reporter=lcov --reporter=text mocha --recursive tests
 stacktrace-parser,tsd && mocha --require ./mocha-babel-hook 'test/**/*.spec.js'
 zen-observable-ts,mocha tests/bundle.cjs
 watchpack-chokidar2,mocha
+react-popper,yarn test:eslint && yarn test:flow && yarn test:ts && yarn test:jest
 randexp,istanbul cover node_modules/.bin/_mocha -- test/*-test.js
+swagger-ui-dist,run-s lint-errors test:unit cy:ci
 mnemonist,mocha
 find-yarn-workspace-root,mocha tests/**/*-test.js
+postcss-clamp,jest && eslint-ci *.js
 unixify,mocha
 @surma/rollup-plugin-off-main-thread,node ./run_tests.js
 cli-progress,mocha test/**/*.test.js
@@ -253,22 +293,29 @@ npm-run-all,nyc --require babel-register npm run _mocha
 d3-scale-chromatic,mocha 'test/**/*-test.js' && eslint src test
 cookie-parser,mocha --reporter spec --bail --check-leaks test/
 d3-force,mocha 'test/**/*-test.js' && eslint src test
+react-dropzone,cross-env NODE_ENV=test yarn lint && jest --coverage && yarn typescript
 d3-dsv,TZ=America/Los_Angeles mocha 'test/**/*-test.js' && eslint src test
 localforage,"node -e ""require('grunt').cli()"" null test"
+raw-loader,npm run test:coverage
+babel-plugin-styled-components,jest
 @mui/icons-material,node scripts/test.mjs
 @zkochan/js-yaml,npm run lint && mocha
 d3-delaunay,mocha 'test/**/*-test.js' && eslint src test
 d3,mocha 'test/**/*-test.js' && eslint src test
 window-size,mocha
+@module-federation/sdk,nx run-many --target=test
 sockjs-client,mocha tests/node.js
+@ardatan/relay-compiler,"f() { EXIT=0; npm run typecheck || EXIT=$?; npm run test-dependencies || EXIT=$?; npm run jest ""$@"" || EXIT=$?; exit $EXIT; }; f"
 seek-bzip,mocha
 cookies,mocha --require test/support/env --reporter spec --bail --check-leaks test/
 keygrip,mocha --reporter spec test/
 @wry/context,nx run-many --target=test --all --parallel
+react-shallow-renderer,jest
 marked-terminal,cross-env FORCE_HYPERLINK=0 mocha tests/*.js --reporter spec
 get-pkg-repo,eslint src/ && nyc mocha --opts mocha.opts src/**/*.spec.js
 d3-brush,mocha 'test/**/*-test.js' && eslint src test
 brotli,mocha
+lazy-universal-dotenv,NODE_OPTIONS=--experimental-vm-modules jest
 lolex,npm run test-node && npm run test-headless
 contains-path,mocha
 d3-chord,mocha 'test/**/*-test.js' && eslint src test
@@ -277,6 +324,7 @@ d3-contour,mkdir -p test/output && mocha -r module-alias/register 'test/**/*-tes
 canvas,mocha test/*.test.js
 unicode-trie,mocha
 passport,node_modules/.bin/mocha --reporter spec --require test/bootstrap/node test/*.test.js test/**/*.test.js
+relay-runtime,"f() { EXIT=0; npm run typecheck || EXIT=$?; npm run test-dependencies || EXIT=$?; npm run jest ""$@"" || EXIT=$?; exit $EXIT; }; f"
 plist,make test
 object.defaults,mocha
 d3-fetch,mocha 'test/**/*-test.js' && eslint src test
@@ -285,15 +333,24 @@ klaw-sync,npm run lint && npm run unit
 dd-trace,SERVICES=* yarn services && mocha --expose-gc 'packages/dd-trace/test/setup/node.js' 'packages/*/test/**/*.spec.js'
 nearley,mocha test/*.test.js
 @datadog/native-iast-taint-tracking,mocha --recursive
+@module-federation/runtime,nx run-many --target=test
 stylus,mocha test/ test/middleware/ --require chai --bail --check-leaks --reporter dot
 @datadog/native-metrics,mocha -n expose-gc 'test/**/*.spec.js' && node test/main
+react-element-to-jsx-string,jest
+@module-federation/error-codes,nx run-many --target=test
+proper-lockfile,jest --env node --coverage --runInBand
+@module-federation/webpack-bundler-runtime,nx run-many --target=test
 is-color-stop,nyc --reporter=lcov --reporter=text mocha
 gonzales-pe,bash ./scripts/test.sh
 bufferutil,mocha
+stylelint-scss,npm run jest -- --coverage
+@module-federation/runtime-tools,nx run-many --target=test
+inline-style-prefixer,cross-env BABEL_ENV=commonjs jest
 make-iterator,mocha
 glob-base,mocha
 c8,cross-env TS_NODE_SKIP_PROJECT=true node ./bin/c8.js mocha --timeout=10000 ./test/*.js
 liftoff,nyc mocha --async-only
+react-syntax-highlighter,jest
 http-assert,mocha --reporter spec --check-leaks test/
 uid-safe,mocha --trace-deprecation --reporter spec --bail --check-leaks test/
 karma,npm run test:unit && npm run test:e2e && npm run test:client
@@ -302,6 +359,7 @@ object.map,mocha
 sanitize-html,npx eslint . && mocha test/test.js
 find-file-up,mocha
 object.omit,mocha
+find-babel-config,jest
 find-pkg,mocha
 koa-convert,mocha index.spec.js --exit
 ssf,make test
@@ -310,19 +368,24 @@ cfb,make test
 utf-8-validate,mocha
 glob-stream,nyc mocha --async-only
 expand-range,mocha
+babel-plugin-module-resolver,jest
 jsonpath,mocha -u tdd test && jscs lib && jshint lib
 xss,export DEBUG=xss:* && mocha -t 5000
 mquery,mocha --exit test/index.js test/*.test.js
+json-to-pretty-yaml,jest
 mv,mocha test/test.js --reporter spec
 eslint-plugin-eslint-comments,nyc npm run -s test:mocha
 vinyl-fs,nyc mocha --async-only
 ethers,npm run test-esm
+css-box-model,yarn jest
 easy-table,mocha -R dot --check-leaks
 eslint-plugin-es-x,npm run -s test:mocha
 wait-port,DEBUG=wait-port nyc --report-dir 'artifacts/coverage' -x 'lib/**/*.spec.js' --reporter=html --reporter=text mocha --recursive -t 10000 'lib/**/*.spec.js'
 is-dotfile,mocha
 parse-glob,mocha
+serve-handler,yarn run test-lint && yarn run test-integration
 plugin-error,nyc mocha --async-only
+xml-js,npm run jasmine && npm run jest && npm run test:types
 ansi-to-html,nyc mocha --reporter tap
 unicode-properties,npm run build && mocha
 lmdb,mocha test/**.test.js --expose-gc --recursive
@@ -330,6 +393,7 @@ tdigest,mocha specs
 tslint,npm-run-all test:pre -p test:mocha test:rules
 serve-favicon,mocha --reporter spec --bail --check-leaks test/
 is-equal-shallow,mocha
+@module-federation/runtime-core,nx run-many --target=test
 regex-cache,mocha
 git-log-parser,mocha
 node-environment-flags,mocha
@@ -343,6 +407,7 @@ module-definition,npm run lint && npm run mocha
 json2mq,./node_modules/.bin/mocha test
 create-error-class,mocha
 detective-amd,npm run lint && npm run mocha
+web3-utils,lerna run test --stream --parallel
 get-amd-module-type,npm run lint && npm run mocha
 detective-cjs,npm run lint && npm run mocha
 should,mocha -R mocha-better-spec-reporter --require ./cjs/should --color --check-leaks ./test/*.test.js ./test/**/*.test.js
@@ -362,15 +427,24 @@ vinyl-sourcemap,nyc mocha --async-only
 cls-hooked,mocha test/*.js & tap test/tap/*.tap.js
 ansi-gray,mocha
 pm2,bash test/unit.sh && bash test/e2e.sh
+bcrypt,jest
 mixin-object,mocha
 good-listener,karma start --single-run
+jest-canvas-mock,jest --no-cache
+has-symbol-support-x,npm run clean:coverage && jest
+has-to-string-tag-x,npm run clean:coverage && jest
 express-session,./test/support/gencert.sh && mocha --require test/support/env --check-leaks --bail --no-exit --reporter spec test/
 isurl,nyc --silent mocha test.js --bail --check-leaks
 @supabase/node-fetch,cross-env BABEL_ENV=test mocha --require babel-register --throw-deprecation test/test.js
+postcss-modules,make test
 @ethersproject/abi,npm run test-esm
 react-clientside-effect,mocha
+@module-federation/dts-plugin,nx run-many --target=test
 load-yaml-file,standard && mocha && ts-readme-generator --check
 @wry/caches,nx run-many --target=test --all --parallel
+@module-federation/managers,nx run-many --target=test
+@module-federation/third-party-dts-extractor,nx run-many --target=test
+optimize-css-assets-webpack-plugin,jest
 ordered-read-streams,nyc mocha --async-only
 errorhandler,mocha --reporter spec --bail --check-leaks test/
 react-helmet,karma start karma.config.js
@@ -383,6 +457,7 @@ align-text,mocha
 swagger-ui-express,./node_modules/.bin/mocha test/*.spec.js
 gulplog,nyc mocha --async-only
 broadcast-channel,"echo ""RUN ALL:"" && npm run test:node && npm run test:browser && npm run test:e2e && npm run test:modules"
+stylus-loader,npm run test:coverage
 css-vendor,cross-env NODE_ENV=test karma start --single-run 
 @ethersproject/bytes,npm run test-esm
 @ethersproject/address,npm run test-esm
@@ -394,9 +469,13 @@ right-align,mocha
 @ethersproject/keccak256,npm run test-esm
 cwd,mocha
 @parcel/watcher-linux-arm64-glibc,mocha
+@module-federation/enhanced,nx run-many --target=test
 @parcel/watcher-win32-x64,mocha
+@module-federation/rspack,nx run-many --target=test
+@module-federation/manifest,nx run-many --target=test
 karma-coverage,mocha
 @ethersproject/rlp,npm run test-esm
+@module-federation/bridge-react-webpack-plugin,nx run-many --target=test
 wkx,jshint . && nyc mocha
 @parcel/watcher-linux-arm64-musl,mocha
 @ethersproject/abstract-signer,npm run test-esm
@@ -407,10 +486,12 @@ sync-fetch,mocha --throw-deprecation test/spec.js
 fontkit,run-s build mocha
 @ethersproject/hash,npm run test-esm
 @ethersproject/properties,npm run test-esm
+babel-plugin-const-enum,jest
 @ethersproject/networks,npm run test-esm
 multipipe,prettier-standard '**/*.js' 'test/*.js' && standard && mocha --reporter spec --timeout 300
 @ethersproject/signing-key,npm run test-esm
 chai-as-promised,c8 mocha
+stylelint-order,node --experimental-vm-modules node_modules/jest/bin/jest.js
 @ethersproject/web,npm run test-esm
 gulp,nyc mocha --async-only
 glob-watcher,nyc mocha test test/lib --async-only
@@ -418,15 +499,22 @@ glob-watcher,nyc mocha test test/lib --async-only
 @sinonjs/formatio,mocha 'lib/**/*.test.js'
 @ethersproject/base64,npm run test-esm
 stream-to-array,mocha --reporter spec --bail
+@module-federation/data-prefetch,nx run-many --target=test
 react-modal,cross-env NODE_ENV=test karma start
 @parcel/watcher-darwin-arm64,mocha
 axios-mock-adapter,mocha && npm run clean && npm run build:umd:min && npm run test:types
 cz-conventional-changelog,mocha *.test.js
 json-pointer,nyc make test
 async-done,nyc mocha --async-only
+react-beautiful-dnd,jest --config ./jest.config.js
+babel-plugin-react-docgen,jest
 has-glob,mocha
+vue-style-loader,jest
+@date-io/core,TZ=UTC NODE_ICU_DATA='./node_modules/full-icu' jest --watch
 @parcel/watcher-darwin-x64,mocha
+promptly,jest --env node --coverage --runInBand
 gulp-cli,mocha --async-only --timeout 5000 test/lib test
+vuex,npm run lint && npm run build && npm run test:types && npm run test:unit && npm run test:ssr && npm run test:e2e && npm run test:esm
 semver-greatest-satisfied-range,nyc mocha --async-only
 merge-deep,mocha
 bach,nyc mocha --async-only
@@ -437,3 +525,100 @@ each-props,nyc mocha --async-only
 @parcel/watcher-android-arm64,mocha
 @parcel/watcher-win32-ia32,mocha
 is2,./node_modules/.bin/mocha -C --reporter list tests.js
+@parcel/watcher-freebsd-x64,mocha
+tcp-port-used,./node_modules/.bin/mocha --reporter=list ./test.js
+@ethersproject/sha2,npm run test-esm
+undertaker,nyc mocha --async-only
+levenary,jest
+postcss-html,nyc npm run mocha
+airbnb-prop-types,npm run build:test && npm run tests-only
+@ethersproject/providers,npm run test-esm
+remove-bom-stream,nyc mocha --async-only
+sqlite3,node test/support/createdb.js && mocha -R spec --timeout 480000
+append-buffer,mocha
+reactcss,npm run unit-test -s && npm run eslint -s
+remove-bom-buffer,mocha
+@img/sharp-linux-arm64,npm run test-lint && npm run test-unit && npm run test-licensing && npm run test-types
+amqplib,make test
+react-color,npm run jest && npm run eslint
+pm2-axon-rpc,mocha --reporter spec
+@ethersproject/basex,npm run test-esm
+@ethersproject/random,npm run test-esm
+mocha-junit-reporter,MOCHA_FILE=test/mocha.xml node_modules/.bin/mocha test --reporter=spec
+as-table,npm run build && env AS_TABLE_TEST_FILE='./build/as-table' nyc --reporter=html --reporter=text mocha --reporter spec
+module-lookup-amd,npm run lint && npm run mocha
+docker-modem,./node_modules/mocha/bin/mocha.js -R spec --exit
+filing-cabinet,npm run lint && npm run mocha
+dependency-tree,npm run lint && npm run mocha
+get-source,nyc --reporter=html --reporter=text mocha test/test.path test/test.node --reporter spec
+stacktracey,nyc --reporter=html --reporter=text mocha --reporter spec
+node-sass,"mocha test/{*,**/**}.js"
+dotenv-defaults,jest
+@pm2/agent,mocha test/units/*.mocha.js
+dockerode,./node_modules/mocha/bin/mocha.js -R spec --exit
+mochawesome-report-generator,"cross-env NODE_ENV=test nyc mocha ""test/spec/**/*.test.js"" --exit"
+create-react-context,jest
+child-process-ext,mocha --recursive
+commitizen,nyc --require @babel/register npm run test-actual
+@img/sharp-linuxmusl-arm64,npm run test-lint && npm run test-unit && npm run test-licensing && npm run test-types
+pm2-axon,make test
+passport-jwt,./node_modules/.bin/mocha --reporter spec --require test/bootstrap test/*test.js
+@ethersproject/wordlists,npm run test-esm
+@ethersproject/pbkdf2,npm run test-esm
+@ethersproject/hdnode,npm run test-esm
+pm2-deploy,mocha
+tcomb-validation,npm run lint && mocha
+@ethersproject/contracts,npm run test-esm
+sass-graph,nyc mocha
+dotenv-webpack,jest
+vscode-json-languageservice,mocha
+@ethersproject/json-wallets,npm run test-esm
+@ethersproject/wallet,npm run test-esm
+@pm2/js-api,mocha test/*
+@ethersproject/units,npm run test-esm
+start-server-and-test,npm run unit
+dogapi,mocha --recursive ./test
+rework,mocha --require should --reporter spec
+@fortawesome/react-fontawesome,jest --silent
+scss-tokenizer,jest
+redux-mock-store,npm run build && npm run test:unit && npm run test:cjs && npm run test:es
+mochawesome,npm run lint && cross-env NODE_ENV=test nyc mocha --config test/.mocharc.json
+html-loader,npm run test:coverage
+thread-loader,npm run test:coverage
+vizion,mocha
+parse-git-config,mocha
+ember-cli-version-checker,mocha tests/*-tests.js
+array-sort,mocha
+react-sizeme,jest
+@img/sharp-darwin-arm64,npm run test-lint && npm run test-unit && npm run test-licensing && npm run test-types
+default-compare,mocha
+whatwg-url-without-unicode,jest
+@img/sharp-win32-x64,npm run test-lint && npm run test-unit && npm run test-licensing && npm run test-types
+@ethersproject/solidity,npm run test-esm
+pad-right,mocha
+array-last,mocha
+prop-types-extra,npm run lint && jest
+eslint-loader,npm run test:coverage
+passport-local,make test
+linebreak,parcel build && mocha test/index.js --reporter landing
+gifwrap,mocha --timeout=6000 ./test/*.js
+@parcel/watcher-linux-arm-musl,mocha
+native-url,jest && karmatic
+console.table,node test/test.js && grunt && npm run unit
+depcheck,mocha ./test ./test/special --timeout 10000
+coveralls,npm run lint && npm run mocha
+is-whitespace,mocha
+msgpack-lite,make test
+diffable-html,jest --verbose
+assertion-error-formatter,yarn run lint && yarn run unit-test
+cli-tableau,mocha test/*
+better-sqlite3,mocha --exit --slow=75 --timeout=5000
+jest-serializer-html,jest --verbose
+web3-eth-iban,lerna run test --stream --parallel
+sync-rpc,jest --coverage
+eslint-import-resolver-webpack,npm run tests-only
+web3-providers-http,lerna run test --stream --parallel
+arr-map,mocha
+@lezer/json,npm run build && mocha test/test-json.js
+condense-newlines,mocha
+requireg,mocha -u tdd --ui exports --reporter spec --slow 2000ms --bail
