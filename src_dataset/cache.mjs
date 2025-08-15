@@ -9,18 +9,18 @@ import { resolve } from "node:path";
  * @param {()=>Promise<T>} asyncCallback 
  * @returns {Promise<T>}
  */
-export async function cacheFunctionOutput(fileName, asyncCallback) {
+export async function cacheFunctionOutput(fileName, asyncCallback, silent=false) {
     const fileLoc = resolve('../cache-repos', fileName);
     if (existsSync(fileLoc)) {
-        console.log("[cacher] Using cached ", fileLoc);
+        !silent && console.log("[cacher] Using cached ", fileLoc);
         const fileContents = (await readFile(fileLoc)).toString();
         return JSON.parse(fileContents);
     } else {
-        console.log("[cacher] cache miss")
+        !silent && console.log("[cacher] cache miss")
         const returnRes = await asyncCallback();
         const fileContents = JSON.stringify(returnRes);
         await writeFile(fileLoc,fileContents);
-        console.log("[cacher] saved ",fileLoc)
+        !silent && console.log("[cacher] saved ",fileLoc)
         return returnRes;
     }
 }

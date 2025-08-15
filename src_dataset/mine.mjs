@@ -4,6 +4,8 @@ import git from 'git-client'
 import { resolve } from 'path'
 import int from 'set.prototype.intersection';
 import { matchFilterList } from './FILTER_LIST.mjs';
+import npmapi from 'npm-api'
+import { cacheFunctionOutput } from './cache.mjs';
 /**
  * 
  * @param {[string,string,number]} param0 
@@ -17,19 +19,24 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
         return [repoName, null]
     };
     // console.log('[git] fetching',repoName, repoGitUrl);
-    await cacheCloneIdempotently(repoPath, repoName, repoGitUrl)
+    let api = new npmapi();
+    const repo = api.repo(repoName);
 
-    const tsConfigFileLocation = resolve(repoPath, 'tsconfig.json');
-    const tsConfigFileExists = existsSync(tsConfigFileLocation);
-    if (tsConfigFileExists){
-         return [repoName, null];
+    let packageJSONContentsString = null;
+
+
+    try{
+        packageJSONContentsString = await cacheFunctionOutput(`cache-repo-package-json-${repoName.replaceAll('/',"_sl_")}.json`,async ()=> JSON.stringify(await repo.package()),true);
+        // console.log("[git] fetched package.json for", repoName);
+    }catch(e){
+        throw new Error(`Failed to fetch package.json for ${repoName} from npm: ${e.message}`);
     }
 
-
-    const packageFile = resolve(repoPath, 'package.json')
-    if (!existsSync(packageFile)) return [repoName, null];
+    if (packageJSONContentsString === undefined || packageJSONContentsString === null) {
+        throw new Error(`Failed to fetch package.json for ${repoName} from npm`);
     // console.log("[git] checking", repoName, "for dependencies at ", packageFile);
-    const packageJSONContentsString = (await readFile(packageFile)).toString()
+    // const packageJSONContentsString = (await readFile(packageFile)).toString()
+    }
 
     // console.log(packageJSONContentsString);
     const packageJSONContents = JSON.parse(packageJSONContentsString)
@@ -41,6 +48,20 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
 
     const hasDependencies = checkTestingDependencies(packageJSONContents, repoName);
     if (hasDependencies) {
+        await cacheCloneIdempotently(repoPath, repoName, repoGitUrl);
+
+        const tsConfigFileLocation = resolve(repoPath, 'tsconfig.json');
+        const tsConfigFileExists = existsSync(tsConfigFileLocation);
+        if (tsConfigFileExists){
+            // console.warn("[git] Ignoring ", repoName, "because it has a tsconfig.json file.");
+            return [repoName, null];
+        }
+        const packageFile = resolve(repoPath, 'package.json')
+        if (!existsSync(packageFile)){
+            console.warn("[git] Unexpected package.json not found in", repoName, "at", packageFile);
+            return [repoName, null];}
+
+        // finally, return the test script if it exists
         return [repoName, ((packageJSONContents?.scripts?.test))]
     }
     else return [repoName, null]
@@ -88,7 +109,7 @@ async function cacheCloneIdempotently(repoPath, repoName, repoGitUrl) {
         if (!isDir) throw new Error(repoName, " is mangled. delete directory and re-clone.")
         else {
             // const path = await git.status({ $cwd: repoPath })
-
+            // console.log("[git] already cloned", repoName, "at", repoPath);
         }
     } else {
         console.log("[git] cloning", repoGitUrl);

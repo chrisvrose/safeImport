@@ -35,7 +35,13 @@ const FILTER_LIST = [
     "https://github.com/netlify/serverless-functions-api",
     "https://github.com/igoradamenko/esbuild-plugin-alias",
     "https://github.com/emotion-js/emotion/tree/master/packages/*",
-    "https://github.com/jhermsmeier/node-http-link-header"
+    "https://github.com/jhermsmeier/node-http-link-header",
+    "https://github.com/serverless/utils",
+    "https://github.com/serverless/dashboard-plugin",
+    "https://github.com/foliojs-fork/linebreaker",
+    "https://github.com/segmentio/analytics.js-video-plugins",
+    "https://github.com/cucumber/cucumber-expressions-javascript",
+    "https://github.com/jakwings/node-temp-fs"
 ];
 
 const FILTER_LIST_REGEX = FILTER_LIST.map(GlobToRegExp)
