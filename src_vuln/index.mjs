@@ -8,10 +8,11 @@ const githubToken = getGithubTokenFromEnvironment();
 const vulnTargets = await findSlicedDeps();
 const affects = [...vulnTargets].join(',');
 
-// console.log(query)
+console.log(vulnTargets.size, "sliced deps found");
 
 const res = await cacheFunctionOutput('advisories.json', async () => {
-    const query = `?ecosystem=npm&affects=${affects}`;
+    const query = `?ecosystem=npm&affects=${encodeURIComponent(affects)}`;
+    // console.log('query',query);
     const res = await fetch('https://api.github.com/advisories'+query,
         {
             headers:{
@@ -21,7 +22,7 @@ const res = await cacheFunctionOutput('advisories.json', async () => {
     );
     const x = await res.json();
     return x;
-},true, false);
+},true, true);
 
 const cveMap = res.map(e=>({
         summary: e.summary,
