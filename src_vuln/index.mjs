@@ -1,8 +1,9 @@
+import { readFile } from "fs/promises";
 import { cacheFunctionOutput } from "../src_dataset/cache.mjs";
 import { bifurcateArray, getGithubTokenFromEnvironment } from "./lib.mjs";
 import { checkForParentDep, findSlicedDeps } from "./slicedeps.mjs";
 import { basename } from "path";
-
+import int from 'set.prototype.intersection'
 const githubToken = getGithubTokenFromEnvironment();
 
 const vulnTargets = await findSlicedDeps();
@@ -46,20 +47,25 @@ for(const depo of fullMaps){
     depMap.get(depo.repo_name).push(depo);
 }
 const depKeys = ([...depMap.keys()])
-console.log(depKeys)
+// console.log(depKeys)
 const repoKeys = await checkForParentDep(depKeys);
-console.log(repoKeys);
+console.log(repoKeys, 'repos found with CVE-ridden direct dependencies');
 // for(const repo of slicedReposSoFar) {
 //     const deps = await getDepsOfRepo(repo);
 //     console.log(repo,deps);
 //     const depCVEs = fullMaps.filter(e=>(deps).includes(e.repo_name));
 //     depMap.set(repo, depCVEs);
 // }
-console.log(cveMap.length, "advisories found");
-console.log(fullMaps.length, "advisories found");
-console.log(emptyMap.length, "advisories found");
+// console.log(cveMap.length, "advisories found");
+// console.log(fullMaps.length, " actionable advisories found");
+// console.log(emptyMap.length, "advisories found");
 // what is pending
 // see what's been sliced so far. Find their dependencies, link back to 
+
+const successRepos = new Set((await readFile('success.txt')).toString().trim().split('\n'));
+// console.log("success with ",successRepos.size)
+const intSet = int (successRepos,repoKeys)
+console.log("Anything right now? ",intSet)
 
 
 
