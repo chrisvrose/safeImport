@@ -41,7 +41,8 @@ const FILTER_LIST = [
     "https://github.com/foliojs-fork/linebreaker",
     "https://github.com/segmentio/analytics.js-video-plugins",
     "https://github.com/cucumber/cucumber-expressions-javascript",
-    "https://github.com/jakwings/node-temp-fs"
+    "https://github.com/jakwings/node-temp-fs",
+    "https://github.com/bower/bower/tree/master/packages/*"
 ];
 
 const FILTER_LIST_REGEX = FILTER_LIST.map(GlobToRegExp)

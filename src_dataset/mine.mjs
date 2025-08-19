@@ -43,6 +43,15 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     // console.log(repoName, packageJSONContents.license)
     if (!hasAnyActualDependencies(packageJSONContents, repoName)) {
         // console.log("[git] skipping", repoName, "has no dependencies");
+        await removeUnnecessaryClone(repoPath);
+        // console.log("Cleaned up ", repoPath);
+        return [repoName, null];
+    }
+
+    if(isLikelyTypescriptProject(packageJSONContents)) {
+        await removeUnnecessaryClone(repoPath);
+        // console.warn("[git] Ignoring ", repoName, "because it is a typescript project.");
+        // console.log("Cleaned up ", repoPath);
         return [repoName, null];
     }
 
@@ -58,15 +67,37 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
         }
         const packageFile = resolve(repoPath, 'package.json')
         if (!existsSync(packageFile)){
-            console.warn("[git] Unexpected package.json not found in", repoName, "at", packageFile);
+            // console.warn("[git] Unexpected package.json not found in", repoName, "at", packageFile);
             return [repoName, null];}
 
         // finally, return the test script if it exists
         return [repoName, ((packageJSONContents?.scripts?.test))]
     }
-    else return [repoName, null]
+    else{
+        await removeUnnecessaryClone(repoPath);
+
+        return [repoName, null]
+    }
 }
 
+function isLikelyTypescriptProject(packageJSONContents) {
+    if (packageJSONContents.devDependencies !== undefined) {
+        if (Object.keys(packageJSONContents.devDependencies).some(e => e.startsWith('typescript'))) {
+            return true;
+        }
+        if (Object.keys(packageJSONContents.dependencies).some(e => e.startsWith('typescript'))) {
+            return true;
+        }
+    }
+    return false;
+}
+async function removeUnnecessaryClone(repoPath) {
+    if(existsSync(repoPath)){
+         console.log("[git] unnecessary clone, removing", repoPath) ;
+        //  while(true){}
+        await rm(repoPath, { recursive: true, force: true });
+    }
+}
 
 function filterRepo(repoGitUrl) {
     return matchFilterList(repoGitUrl);

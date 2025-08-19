@@ -16,8 +16,14 @@ import {builtinModules} from 'node:module'
 export function getImportCallsAndArgumentTypes(importDecls, checker, mainFilePath, libraryTypesRecorder) {
     // const libraryTypesRecorder = new LibraryTypesRecorder(checker);
     for (const importStringDecl of importDecls) {
+
         // console.log(importStringDecl);
         const importDecl = importStringDecl.getFirstAncestor();
+        const packageName = importStringDecl.getLiteralValue();
+        if(isNodeModule(packageName)) {
+            // just skip node module scanning.
+            continue;
+        }
         if (importDecl === undefined) {
             console.error("Import declaration is undefined for", importStringDecl.getText());
             continue;
