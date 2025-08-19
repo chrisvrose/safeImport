@@ -1,6 +1,6 @@
 #!/bin/bash
-# test repos
-IGNORE_REPOS=("source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler")  # Add the list of repositories to ignore
+# run slicer
+IGNORE_REPOS=("source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler" "rxjs" "d3-array" "lie" "@cspotcode/source-map-support" "d3-shape" "pac-resolver" "ts-loader" "pgpass" "less" "d3-geo" "rollup-plugin-terser" "seek-bzip" "brotli" "d3-contour" "nearley" "zig" "liftoff" "tslint" "react-syntax-highlighter" "xml-js" "web3-utils" "react-focus-lock" "clipboard" "css-vendor" "fontkit" "append-buffer" "react-color" "aws-cdk-lib" "jest-serializer-html" "fontkit" "@aws-cdk/core")  # Add the list of repositories to ignore
 # set -e 
 
 
@@ -20,9 +20,11 @@ while IFS=, read -r repo test_script; do
     if [[ -n "$repo" ]]; then
 
         # If the repo belongs to a given list, ignore it
-        if [[ " ${IGNORE_REPOS[@]} " =~ " ${repo} " ]]; then
+        if [[ "${IGNORE_REPOS[@]}" =~ "${repo}" ]]; then
             echo "Ignoring repository: $repo"
             continue
+            else
+                echo "Processing repository: $repo"
         fi    
         # Extract the repo name from the URL
         repo_name=$(basename "$repo" .git)
@@ -46,9 +48,15 @@ while IFS=, read -r repo test_script; do
             else 
                 cp -r "../cache-repos/repos/$repo_name" "candidates/$repo_name" || exit
                 pushd "candidates/$repo_name" > /dev/null || fail "Failed to pushd"
-                npm install --silent || fail "Failed to npm i"
+                npm install --silent
+                NPMI_RESULT=$?
                 popd > /dev/null || fail "Failed to popd"
                 
+                if [[ $NPMI_RESULT -ne 0 ]]; then
+                    echo "npm install failed for $repo_name, skipping..."
+                    echo "$repo_name" >> "failed-install.txt"
+                    continue
+                fi
 
                 node src/index.mjs "candidates/$repo_name"  >> processed.log  2>&1    
                 RESULT=$?

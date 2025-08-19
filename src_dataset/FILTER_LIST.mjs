@@ -42,7 +42,23 @@ const FILTER_LIST = [
     "https://github.com/segmentio/analytics.js-video-plugins",
     "https://github.com/cucumber/cucumber-expressions-javascript",
     "https://github.com/jakwings/node-temp-fs",
-    "https://github.com/bower/bower/tree/master/packages/*"
+    "https://github.com/bower/bower/tree/master/packages/*",
+    "https://github.com/applitools/rendering-grid",
+    "https://github.com/timkendrick/maximatch",
+    "https://github.com/jonschlinkert/is-valid-instance",
+    "https://github.com/applitools/eyes.sdk.javascript1",
+    "https://github.com/cssinjs/jss-nested",
+    "https://github.com/cssinjs/jss-camel-case",
+    "https://github.com/serverlessinc/utils-china",
+    "https://github.com/eugeneware/jwt-encode",
+    "https://github.com/aws/aws-cdk", //doesnt slice anyways
+    "https://github.com/cssinjs/jss-vendor-prefixer",
+    "https://github.com/inf3rno/o3",
+    "https://github.com/inf3rno/error-polyfill",
+    "https://github.com/spenceralger/rcfinder",
+    "https://github.com/okta/okta-idx-js",
+    "https://github.com/cssinjs/jss-compose",
+    "https://github.com/kaazing/node-http2"
 ];
 
 const FILTER_LIST_REGEX = FILTER_LIST.map(GlobToRegExp)
