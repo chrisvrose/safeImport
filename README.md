@@ -48,3 +48,15 @@
 
 
     Note that in some cases, the scripts may attempt to execute tests in the backup node modules folder (`.node_modules`). In this case, move it out, and run the tests individually. You can get the commands from the output from the master script (which calls the `script-placer.sh` script).
+
+
+
+---
+
+## Vuln finding
+
+The scripts here help find repositories that are - firstly, slicable, and have a direct dependency on a repo that have a github advisory (~CVE) on them. 
+
+From there, you can run the slicer manually to track if they get removed.
+
+Note that it uses the success.txt, not `output`. 
