@@ -1,7 +1,7 @@
 
 
 
-REPO_BASE="mime-types"
+REPO_BASE="des.js"
 
 REPO_FOLDER="../candidates-repos/$REPO_BASE"
 
@@ -27,12 +27,12 @@ echo "Input function: $INPUT_FUNCTION";
 case "$INPUT_FUNCTION" in
     "pre-test")
         pushd "$REPO_FOLDER"
-        read -p "Deleting old node_modules_2 directory?" choice
+        read -p "Deleting old .node_modules directory?" choice
         if [[ "$choice" == "y" || "$choice" == "Y" ]];
         then
-            rm -rf node_modules_2
+            rm -rf .node_modules node_modules_2
         else
-            echo "Skipping deletion of node_modules_2"
+            echo "Skipping deletion of .node_modules"
         fi
         npm i --silent || fail "Failed to install dependencies"
         npm run test
@@ -40,20 +40,20 @@ case "$INPUT_FUNCTION" in
         ;;
     "rollback")
         pushd "$REPO_FOLDER"
-        # Move node_modules_2 back to node_modules
-        if [[ -d "node_modules_2" ]]; then
-            echo "Restoring node_modules from node_modules_2"
+        # Move .node_modules back to node_modules
+        if [[ -d ".node_modules" ]]; then
+            echo "Restoring node_modules from .node_modules"
             rm -irf node_modules
-            mv node_modules_2 node_modules
+            mv .node_modules node_modules
         else
-            fail "node_modules_2 does not exist, cannot rollback"
+            fail ".node_modules does not exist, cannot rollback"
         fi
         popd
         ;;
     "indeps")
-        # Inactivate the repo by moving node_modules to node_modules_2
+        # Inactivate the repo by moving node_modules to .node_modules
         pushd "$REPO_FOLDER"
-        mv node_modules node_modules_2
+        mv node_modules .node_modules
         popd
         ;;
     "stat")
@@ -64,18 +64,28 @@ case "$INPUT_FUNCTION" in
         else
             echo "node_modules directory exists"
         fi
-        if [[ ! -d "node_modules_2" ]]; then
-            echo "node_modules_2 directory does not exist"
+        if [[ ! -d ".node_modules" ]]; then
+            echo ".node_modules directory does not exist"
             else
-            echo "node_modules_2 directory exists"
+            echo ".node_modules directory exists"
         fi
         popd >> /dev/null
         ;;
     "cov")
         pushd "$REPO_FOLDER"
+        rm -rf .node_modules node_modules_2
         npm i --silent || fail "Failed to install dependencies"
         npm i -D @types/node || fail "Failed to install node types"
         nyc npm run test 
+        ;;
+    "slice")
+        pushd "$REPO_FOLDER"
+        rm -rf .node_modules node_modules_2
+        npm i --silent || fail "Failed to install dependencies"
+        npm i -D @types/node || fail "Failed to install node types"
+        
+        popd
+        node src/index.mjs "$REPO_FOLDER" || fail "Failed to execute src/index.mjs"
         ;;
     "exec")
 
@@ -87,8 +97,16 @@ case "$INPUT_FUNCTION" in
             echo "script-placer.sh executed successfully."
         fi
         ;;
+    "cloc")
+        echo "--: PRE :--"
+        cloc "output/$REPO_BASE"
+        echo "--: POST :--"
+        cloc "dist/$REPO_BASE" --exclude-ext=json
+        echo "--: DEPS :--"
+        echo "Dependencies: " `ls -1 dist/$REPO_BASE | wc -l`
+        ;;
     *)
-        fail "Unknown function: $INPUT_FUNCTION. Supported functions: test, build."
+        fail "Unknown function: $INPUT_FUNCTION. Supported functions: pre-test, rollback, indeps, stat, cov, exec, sloc"
         ;;
 
 esac
