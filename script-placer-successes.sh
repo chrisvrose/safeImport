@@ -201,6 +201,15 @@ IGNORE_REPOS=(
 "babel-plugin-ember-modules-api-polyfill"
 "csurf"
 "taketalk"
+"require-and-forget"
+"geojson-equality"
+"relative"
+"pkg-config"
+"rss-parser"
+"xml-but-prettier"
+"karma-spec-reporter"
+"speakeasy"
+"parsejson"
 )
 
 while read -r repo; do
