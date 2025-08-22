@@ -1,6 +1,6 @@
 #!/bin/bash
 # run slicer
-IGNORE_REPOS=("source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler" "rxjs" "d3-array" "lie" "@cspotcode/source-map-support" "d3-shape" "pac-resolver" "ts-loader" "pgpass" "less" "d3-geo" "rollup-plugin-terser" "seek-bzip" "brotli" "d3-contour" "nearley" "zig" "liftoff" "tslint" "react-syntax-highlighter" "xml-js" "web3-utils" "react-focus-lock" "clipboard" "css-vendor" "fontkit" "append-buffer" "react-color" "aws-cdk-lib" "jest-serializer-html" "fontkit" "@aws-cdk/core")  # Add the list of repositories to ignore
+IGNORE_REPOS=("source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler" "rxjs" "d3-array" "lie" "@cspotcode/source-map-support" "d3-shape" "pac-resolver" "ts-loader" "pgpass" "less" "d3-geo" "rollup-plugin-terser" "seek-bzip" "brotli" "d3-contour" "nearley" "zig" "liftoff" "tslint" "react-syntax-highlighter" "xml-js" "web3-utils" "react-focus-lock" "clipboard" "css-vendor" "fontkit" "append-buffer" "react-color" "aws-cdk-lib" "jest-serializer-html" "fontkit" "@aws-cdk/core" "svg2ttf" "ttf2woff" "eslint-plugin-sort-keys-fix" "react-places-autocomplete" "moddle" "docsify" "moddle-xml" "openapi-to-postmanv2" "bpmn-moddle")  # Add the list of repositories to ignore
 # set -e 
 
 
@@ -54,6 +54,7 @@ while IFS=, read -r repo test_script; do
                 
                 if [[ $NPMI_RESULT -ne 0 ]]; then
                     echo "npm install failed for $repo_name, skipping..."
+                    touch "candidates/$repo_name/.done"
                     echo "$repo_name" >> "failed-install.txt"
                     continue
                 fi
