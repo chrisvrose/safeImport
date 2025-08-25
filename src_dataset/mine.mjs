@@ -15,7 +15,7 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
     const repoPath = resolve('../cache-repos/repos', repoName)
 
     if (filterRepo(repoGitUrl)) {
-        console.log("[git] ignoring ", repoName)
+        // console.log("[git] ignoring ", repoName)
         return [repoName, null]
     };
     // console.log('[git] fetching',repoName, repoGitUrl);
@@ -24,9 +24,12 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
 
     let packageJSONContentsString = null;
 
-
     try{
-        packageJSONContentsString = await cacheFunctionOutput(`cache-repo-package-json-${repoName.replaceAll('/',"_sl_")}.json`,async ()=> JSON.stringify(await repo.package()),true);
+        packageJSONContentsString = await cacheFunctionOutput(`cache-repo-package-json-${repoName.replaceAll('/',"_sl_")}.json`,async ()=>{
+            // console.log(`[npm] fetching package.json for ${repoName} from npm`);
+            const packageJson = await repo.package();
+            return JSON.stringify(packageJson);
+        },true);
         // console.log("[git] fetched package.json for", repoName);
     }catch(e){
         throw new Error(`Failed to fetch package.json for ${repoName} from npm: ${e.message}`);
@@ -48,7 +51,7 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
         return [repoName, null];
     }
 
-    if(isLikelyTypescriptProject(packageJSONContents)) {
+    if(isUnwantedProject(packageJSONContents)) {
         await removeUnnecessaryClone(repoPath);
         // console.warn("[git] Ignoring ", repoName, "because it is a typescript project.");
         // console.log("Cleaned up ", repoPath);
@@ -57,7 +60,11 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
 
     const hasDependencies = checkTestingDependencies(packageJSONContents, repoName);
     if (hasDependencies) {
-        await cacheCloneIdempotently(repoPath, repoName, repoGitUrl);
+        const gotCloned = await cacheCloneIdempotently(repoPath, repoName, repoGitUrl);
+        if (!gotCloned) {
+            console.warn("[git] Failed to clone ", repoName, "at", repoGitUrl);
+            return [repoName, null];
+        }
 
         const tsConfigFileLocation = resolve(repoPath, 'tsconfig.json');
         const tsConfigFileExists = existsSync(tsConfigFileLocation);
@@ -79,13 +86,21 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
         return [repoName, null]
     }
 }
+/**
+ * Filter by packages
+ * @param {string} packageName
+ */
+function filterPackage(packageName){
+    return packageName.startsWith('typescript') || packageName.startsWith('node-gyp')
+}
 
-function isLikelyTypescriptProject(packageJSONContents) {
+function isUnwantedProject(packageJSONContents) {
+    // Is typescript project?
     if (packageJSONContents.devDependencies !== undefined) {
-        if (Object.keys(packageJSONContents.devDependencies).some(e => e.startsWith('typescript'))) {
+        if (Object.keys(packageJSONContents.devDependencies).some(filterPackage)) {
             return true;
         }
-        if (Object.keys(packageJSONContents.dependencies).some(e => e.startsWith('typescript'))) {
+        if (packageJSONContents.dependencies !== undefined && Object.keys(packageJSONContents.dependencies).some(filterPackage)) {
             return true;
         }
     }
@@ -137,13 +152,18 @@ function checkTestingDependencies(packageJSONContents, repoName) {
 async function cacheCloneIdempotently(repoPath, repoName, repoGitUrl) {
     if (existsSync(repoPath)) {
         const isDir = (await lstat(repoPath)).isDirectory()
-        if (!isDir) throw new Error(repoName, " is mangled. delete directory and re-clone.")
-        else {
-            // const path = await git.status({ $cwd: repoPath })
-            // console.log("[git] already cloned", repoName, "at", repoPath);
+        if (!isDir) {
+            throw new Error(repoName, " is mangled. delete directory and re-clone.")
         }
+        return true;
     } else {
-        console.log("[git] cloning", repoGitUrl);
-        await git.clone(repoGitUrl, repoPath, { 'single-branch': true, depth: 1 })
+        // console.log("[git] cloning", repoGitUrl);
+        try{
+            await git.clone(repoGitUrl, repoPath, { 'single-branch': true, depth: 1 })
+            return true;
+        }catch(e){
+            console.log(e.message)
+            return false;
+        }
     }
 }

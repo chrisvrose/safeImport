@@ -30,15 +30,15 @@ const intermediateRepoList = await cacheFunctionOutput('repos.n2.json', async fu
 // const packageMap = new Map(packageList)
 
 console.log(`Total repos`,intermediateRepoList.length)
-const intermediateRepoListSmaller = intermediateRepoList.slice(0,20000);
+const intermediateRepoListSmaller = intermediateRepoList.slice(0,60000);
 
 const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,40,cloneRepoAndCheck)
 
 const repoStatusString = csv.stringify(repoStatus);
-await fsp.writeFile('repostatus.csv', repoStatusString);
+await fsp.writeFile('repostatus2.csv', repoStatusString);
 
 const minableRepositories = repoStatus.filter(e=>(e!==null && e?.[1]));
 const output = csv.stringify(minableRepositories);
-await fsp.writeFile('minableRepositories2.csv', output);
+await fsp.writeFile('minableRepositories3.csv', output);
 // console.log("written results")
 
