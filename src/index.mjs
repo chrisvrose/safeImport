@@ -94,7 +94,7 @@ function createPackageJsonForModule(moduleName, writePath) {
  * 
  * @param {string} filePath 
  */
-function driver(folderPath = './candidates/braces') {
+function driver(folderPath = './test_src') {
     // const FILE_PATH = './test_src/index.cjs';
 
     const project = new Project({ compilerOptions: { allowJs: true, checkJs: false, } });
