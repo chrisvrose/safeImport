@@ -1,11 +1,12 @@
 import { existsSync, } from 'fs'
-import { lstat, readFile,rm } from 'fs/promises'
+import { lstat, readFile,rm, appendFile } from 'fs/promises'
 import git from 'git-client'
 import { resolve } from 'path'
 import int from 'set.prototype.intersection';
 import { matchFilterList } from './FILTER_LIST.mjs';
 import npmapi from 'npm-api'
 import { cacheFunctionOutput } from './cache.mjs';
+import parseLicense from 'spdx-expression-parse'
 /**
  * 
  * @param {[string,string,number]} param0 
@@ -32,7 +33,7 @@ export async function cloneRepoAndCheck([repoName, repoGitUrl, downloadCount]) {
         },true);
         // console.log("[git] fetched package.json for", repoName);
     }catch(e){
-        throw new Error(`Failed to fetch package.json for ${repoName} from npm: ${e.message}`);
+        throw new Error(`Failed to fetch package.json for ${repoName} from npm: ${e.message}, gitrepoUrl ${repoGitUrl}`);
     }
 
     if (packageJSONContentsString === undefined || packageJSONContentsString === null) {
@@ -94,7 +95,18 @@ function filterPackage(packageName){
     return packageName.startsWith('typescript') || packageName.startsWith('node-gyp')
 }
 
-function isUnwantedProject(packageJSONContents) {
+
+
+function matchesOSSLicense(e) {
+        let matches = false;
+        try {
+            parseLicense(e);
+            matches = true;
+        }
+        catch { }
+        return matches;
+}
+export function isUnwantedProject(packageJSONContents) {
     // Is typescript project?
     if (packageJSONContents.devDependencies !== undefined) {
         if (Object.keys(packageJSONContents.devDependencies).some(filterPackage)) {
@@ -103,6 +115,15 @@ function isUnwantedProject(packageJSONContents) {
         if (packageJSONContents.dependencies !== undefined && Object.keys(packageJSONContents.dependencies).some(filterPackage)) {
             return true;
         }
+    }
+
+    if(packageJSONContents.license === undefined || packageJSONContents.license === null || packageJSONContents.license === ""){
+        // console.log("Undefined License")
+        return true;
+    }
+    if(!matchesOSSLicense(packageJSONContents.license)){
+        // console.log("Non OSS license", packageJSONContents.license)
+        return true;
     }
     return false;
 }
@@ -118,7 +139,7 @@ function filterRepo(repoGitUrl) {
     return matchFilterList(repoGitUrl);
 }
 
-function hasAnyActualDependencies(packageJSONContents, repoName) {
+export function hasAnyActualDependencies(packageJSONContents, repoName) {
     if (packageJSONContents.dependencies !== undefined && Object.keys(packageJSONContents.dependencies).length > 0) {
         return true;
     }
@@ -155,14 +176,25 @@ async function cacheCloneIdempotently(repoPath, repoName, repoGitUrl) {
         if (!isDir) {
             throw new Error(repoName, " is mangled. delete directory and re-clone.")
         }
+        const gitPath = resolve(repoPath,'.git')
+        if(existsSync(gitPath)){
+            // console.log('[git] useless .git at '+gitPath+', cleaning up');
+            await rm(gitPath,{recursive:true});
+        }
         return true;
     } else {
         // console.log("[git] cloning", repoGitUrl);
         try{
             await git.clone(repoGitUrl, repoPath, { 'single-branch': true, depth: 1 })
+            const gitPath = resolve(repoPath,'.git')
+            if(existsSync(gitPath)){
+                // console.log('[git] useless .git at '+gitPath+', cleaning up');
+                await rm(gitPath,{recursive:true});
+            }
             return true;
         }catch(e){
-            console.log(e.message)
+            // console.log(e.message)
+            await appendFile('ignores.txt',repoGitUrl+'\n')
             return false;
         }
     }

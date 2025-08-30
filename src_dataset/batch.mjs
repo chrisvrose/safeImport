@@ -1,3 +1,4 @@
+// @ts-check
 import { writeFile,open } from "node:fs/promises";
 
 /**
@@ -7,12 +8,14 @@ import { writeFile,open } from "node:fs/promises";
  * @param {T[]} items 
  * @param {number} limit 
  * @param {(T)=>Promise<U>} asyncCallback 
+ * @param {boolean} writeLogs
  * @returns {Promise<U[]>}
  */
 export async function processPromisesBatch(
     items,
     limit,
     asyncCallback,
+    writeLogs= false
 ) {
     const results = [];
     const fileHandle = await open('../cache-repos/progress.txt',"w+");
@@ -21,10 +24,11 @@ export async function processPromisesBatch(
 
         const slicedResults = await Promise.all(items.slice(start, end).map(asyncCallback));
 
-        const writePromise = writeFile(fileHandle,transformRes(slicedResults),{flush:true});
-        console.log(`[batch] finished batch [${start},${end})`)
+        // console.log(`[batch] finished batch [${start},${end})`)
         results.push(...slicedResults);
-        await writePromise;
+        if(writeLogs){
+            await writeFile(fileHandle,transformRes(slicedResults),{flush:true});
+        }
     }
     fileHandle.close();
 

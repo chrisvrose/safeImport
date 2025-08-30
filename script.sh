@@ -1,6 +1,11 @@
 #!/bin/bash
 # run slicer
-IGNORE_REPOS=("source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler" "rxjs" "d3-array" "lie" "@cspotcode/source-map-support" "d3-shape" "pac-resolver" "ts-loader" "pgpass" "less" "d3-geo" "rollup-plugin-terser" "seek-bzip" "brotli" "d3-contour" "nearley" "zig" "liftoff" "tslint" "react-syntax-highlighter" "xml-js" "web3-utils" "react-focus-lock" "clipboard" "css-vendor" "fontkit" "append-buffer" "react-color" "aws-cdk-lib" "jest-serializer-html" "fontkit" "@aws-cdk/core" "svg2ttf" "ttf2woff" "eslint-plugin-sort-keys-fix" "react-places-autocomplete" "moddle" "docsify" "moddle-xml" "openapi-to-postmanv2" "bpmn-moddle")  # Add the list of repositories to ignore
+IGNORE_REPOS=(
+    "source-map-support" "jsdom" "eslint-utils" "polished" "webpack-bundle-analyzer" "jscodeshift" "chromium-bidi" "react-popper" "react-dropzone" "babel-plugin-styled-components" "unicode-trie" "relay-runtime" "react-element-to-jsx-string" "inline-style-prefixer" "karma" "cfb" "serve-handler" "rxjs" "d3-array" "lie" "@cspotcode/source-map-support" "d3-shape" "pac-resolver" "ts-loader" "pgpass" "less" "d3-geo" "rollup-plugin-terser" "seek-bzip" "brotli" "d3-contour" "nearley" "zig" "liftoff" "tslint" "react-syntax-highlighter" "xml-js" "web3-utils" "react-focus-lock" "clipboard" "css-vendor" "fontkit" "append-buffer" "react-color" "aws-cdk-lib" "jest-serializer-html" "fontkit" "@aws-cdk/core" "svg2ttf" "ttf2woff" "eslint-plugin-sort-keys-fix" "react-places-autocomplete" "moddle" "docsify" "moddle-xml" "openapi-to-postmanv2" "bpmn-moddle" "espower" "random-useragent" "jsdom" "preact-compat" "react-cytoscapejs" "enzyme-async-helpers" "@foliojs-fork/fontkit" "@pdf-lib/fontkit" "@applitools/jsdom" "jsdoc-babel" "coinstring" "@lezer/css" "bpmn-js-properties-panel" "https-localhost" "waterline-schema" "ruby" "@koa/ejs" "react-calendar-heatmap" "gulp-file-include" "selection-ranges" "react-photo-gallery" "textract" "events-light" "line-numbers"
+    "react-intl-redux" "mr-dep-walk" "postcss-prettify" "textcomplete" 
+    "winston-graylog2" "react-native-svg-asset-plugin" "@cap-js/openapi" "@wesleytodd/openapi" "require-hacker" "storybook-addon-specifications" "animated-number-react" "dmn-js-properties-panel" "benchpressjs"
+    "angular-google-maps" "enzyme-async-helpers"
+    ) 
 # set -e 
 
 
@@ -12,16 +17,26 @@ function fail {
 # rm -rf candidates
 mkdir -p candidates
 rm -iv processed.log current.log success.txt
+N=0;
 
 # Read the minableRepositories2.csv file (rows of repo,test script). Read the repo and copy it from the `cache` folder`
 while IFS=, read -r repo test_script; do
 
+    echo "$N"
+    if (( N % 2 == 0 )); then
+        N=$((N + 1))
+        continue  # Skip the rest of the loop if N is divisible by 2
+    fi
+    N=$((N+1))
     # Check if the repo is not empty
     if [[ -n "$repo" ]]; then
 
         # If the repo belongs to a given list, ignore it
         if [[ "${IGNORE_REPOS[@]}" =~ "${repo}" ]]; then
             echo "Ignoring repository: $repo"
+            repo_name=$(basename "$repo" .git)
+            echo "Cleaning unused $repo_name"
+            rm -rf "../candidates-repos/$repo_name"
             continue
             else
                 echo "Processing repository: $repo"
@@ -34,36 +49,38 @@ while IFS=, read -r repo test_script; do
             echo "Processing repository: $repo_name"
             echo "Processing repository: $repo_name" >> current.log
             # Change to the repository directory
-            if [[ -d "candidates/$repo_name" ]]; then
+            if [[ -d "../candidates-repos/$repo_name" ]]; then
                 echo "Repository $repo_name already exists in candidates, skipping..."
-                if [[ -f "candidates/$repo_name/.done" ]]; then
+                if [[ -f "../candidates-repos/$repo_name/.done" ]]; then
                     echo "Skipping $repo_name as it has already been processed."
                     continue
                     else
                         echo "Processing $repo_name again as .done file is missing. Run it again."
-                        rm -rf "candidates/$repo_name"
+                        rm -rf "../candidates-repos/$repo_name"
                 fi
                 # Uncomment the next line if you want to remove the existing directory
-                # rm -rf "candidates/$repo_name"
+                # rm -rf "../candidates-repos/$repo_name"
             else 
-                cp -r "../cache-repos/repos/$repo_name" "candidates/$repo_name" || exit
-                pushd "candidates/$repo_name" > /dev/null || fail "Failed to pushd"
+                cp -r "../cache-repos/repos/$repo_name" "../candidates-repos/$repo_name" || exit
+                pushd "../candidates-repos/$repo_name" > /dev/null || fail "Failed to pushd"
                 npm install --silent
                 NPMI_RESULT=$?
                 popd > /dev/null || fail "Failed to popd"
                 
                 if [[ $NPMI_RESULT -ne 0 ]]; then
                     echo "npm install failed for $repo_name, skipping..."
-                    touch "candidates/$repo_name/.done"
+                    touch "../candidates-repos/$repo_name/.done"
+                    rm -rf "../candidates-repos/$repo_name/node_modules"
                     echo "$repo_name" >> "failed-install.txt"
                     continue
                 fi
 
-                node src/index.mjs "candidates/$repo_name"  >> processed.log  2>&1    
+                timeout 5m node src/index.mjs "../candidates-repos/$repo_name"  >> processed.log  2>&1    
                 RESULT=$?
                 echo "--Separator-- $repo_name" >> processed.log
-                touch "candidates/$repo_name/.done"
+                touch "../candidates-repos/$repo_name/.done"
                 if [[ $RESULT -ne 0 ]]; then
+                    rm -rf "../candidates-repos/$repo_name/node_modules"
                     echo "Error processing repository: $repo_name"
                     # exit $RESULT
                 else

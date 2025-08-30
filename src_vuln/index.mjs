@@ -7,22 +7,22 @@ import int from 'set.prototype.intersection'
 const githubToken = getGithubTokenFromEnvironment();
 
 const vulnTargets = await findSlicedDeps();
-const affects = [...vulnTargets].join(',');
 
 console.log(vulnTargets.size, "sliced deps found");
 
 const res = await cacheFunctionOutput('advisories.json', async () => {
-    const query = `?ecosystem=npm&affects=${encodeURIComponent(affects)}`;
-    // console.log('query',query);
-    const res = await fetch('https://api.github.com/advisories'+query,
-        {
-            headers:{
-                Authorization: `Bearer ${githubToken}`,
-            }
-        }
-    );
-    const x = await res.json();
-    return x;
+
+    const affectsArray = [...vulnTargets];
+    const part1 = affectsArray.slice(0,500);
+    const part2 = affectsArray.slice(500)
+
+    const advisories = [];
+    for(const part of [part1,part2]){
+        const x = await fetchAdvisoryForAffects(part);
+        // console.log(x);
+        advisories.push(...x);
+    }
+    return advisories;
 },true, true);
 
 const cveMap = res.map(e=>({
@@ -69,4 +69,19 @@ console.log("Anything right now? ",intSet)
 
 
 
+
+async function fetchAdvisoryForAffects(affectsArray) {
+    const affects = affectsArray.join(',');
+    const query = `?ecosystem=npm&affects=${encodeURIComponent(affects)}`;
+    // console.log('query',query);
+    const res = await fetch('https://api.github.com/advisories' + query,
+        {
+            headers: {
+                Authorization: `Bearer ${githubToken}`,
+            }
+        }
+    );
+    const x = await res.json();
+    return x;
+}
 

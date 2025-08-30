@@ -30,7 +30,7 @@ const intermediateRepoList = await cacheFunctionOutput('repos.n2.json', async fu
 // const packageMap = new Map(packageList)
 
 console.log(`Total repos`,intermediateRepoList.length)
-const intermediateRepoListSmaller = intermediateRepoList.slice(0,60000);
+const intermediateRepoListSmaller = intermediateRepoList;
 
 const repoStatus = await processPromisesBatch(intermediateRepoListSmaller,40,cloneRepoAndCheck)
 
