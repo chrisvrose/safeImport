@@ -30,6 +30,7 @@
     "minimatch": "^10.0.3",
     "nodeplotlib": "^1.1.2",
     "npm-api": "^1.0.1",
+    "oubliette": "^1.0.4",
     "semver": "^7.7.2",
     "set.prototype.intersection": "^1.1.7",
     "slice-js": "file:/home/atreyab/Documents/Docs/SlicingImport/repos-js/slice-js",

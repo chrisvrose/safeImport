@@ -38,7 +38,7 @@ fi
 
 pushd "$REPO_FOLDER"
 mv node_modules .node_modules
-NODE_PATH="/home/atreyab/Documents/Docs/SlicingImport/repos-js/safeImport/dist/$REPO_BASE:/home/atreyab/Documents/Docs/SlicingImport/repos-js/candidates-repos/$REPO_BASE/.node_modules" npm run test #>> ../coverage/$REPO_BASE-post.txt
+NODE_PATH="/home/atreyab/Documents/Docs/SlicingImport/repos-js/safeImport/dist/$REPO_BASE:/home/atreyab/Documents/Docs/SlicingImport/repos-js/candidates-repos/$REPO_BASE/.node_modules" timeout 5m npm run test #>> ../coverage/$REPO_BASE-post.txt
 # less ../coverage/$REPO_BASE-post.txt
 POST_TEST_RESULT=$?
 # if post test is true, or both are false, then we can proceed
