@@ -1,10 +1,12 @@
 import { readFile } from "fs/promises";
 import { cacheFunctionOutput } from "../src_dataset/cache.mjs";
 import { bifurcateArray, getGithubTokenFromEnvironment } from "./lib.mjs";
-import { checkForParentDep, findSlicedDeps } from "./slicedeps.mjs";
+import { getMinimalParentRepoMap, findSlicedDeps } from "./slicedeps.mjs";
 import { basename } from "path";
-import int from 'set.prototype.intersection'
+import setIntersect from 'set.prototype.intersection'
 const githubToken = getGithubTokenFromEnvironment();
+import {stringify} from 'csv/sync'
+import { writeFileSync } from "fs";
 
 const vulnTargets = await findSlicedDeps();
 
@@ -31,44 +33,58 @@ const cveMap = res.map(e=>({
         severity: e.severity,
         repo_name: basename(e.source_code_location),
         cve: e.cve_id,
-        identifiers: e.identifiers,
-        cvss: e.cvss,
+        // identifiers: e.identifiers,
+        // cvss: e.cvss,
     }));
 
-const [fullMaps,emptyMap]= bifurcateArray(cveMap, (e)=>e.source)
+const [cvesWithASource,emptyMap]= bifurcateArray(cveMap, (e)=>e.source)
 
-
+/** @typedef {{summary:string,source:string|undefined,severity: string, repo_name: string}} CVEEntrySimple */
 // const slicedReposSoFar = await findSlicedDepsSoFar();
-const depMap = new Map();
-for(const depo of fullMaps){
-    if(!depMap.has(depo.repo_name)) {
-        depMap.set(depo.repo_name, []);
+/** @type {Map<string,CVEEntrySimple>} */
+const vulnerableDependenciesNameCVEMap = new Map();
+for(const cveData of cvesWithASource){
+    if(!vulnerableDependenciesNameCVEMap.has(cveData.repo_name)) {
+        vulnerableDependenciesNameCVEMap.set(cveData.repo_name, []);
     }
-    depMap.get(depo.repo_name).push(depo);
+    vulnerableDependenciesNameCVEMap.get(cveData.repo_name).push(cveData);
 }
-const depKeys = ([...depMap.keys()])
+const depKeys = ([...vulnerableDependenciesNameCVEMap.keys()])
 // console.log(depKeys)
-const repoKeys = await checkForParentDep(depKeys);
-console.log(repoKeys, 'repos found with CVE-ridden direct dependencies');
-// for(const repo of slicedReposSoFar) {
-//     const deps = await getDepsOfRepo(repo);
-//     console.log(repo,deps);
-//     const depCVEs = fullMaps.filter(e=>(deps).includes(e.repo_name));
-//     depMap.set(repo, depCVEs);
-// }
-// console.log(cveMap.length, "advisories found");
-// console.log(fullMaps.length, " actionable advisories found");
-// console.log(emptyMap.length, "advisories found");
-// what is pending
-// see what's been sliced so far. Find their dependencies, link back to 
+const parentDependencyVulnMapping = await getMinimalParentRepoMap(depKeys);
+const vulnerableParentKeys = new Set([...parentDependencyVulnMapping.keys()]);
+console.log(vulnerableParentKeys.size, 'repos found with CVE-ridden direct dependencies');
+
+
 
 const successRepos = new Set((await readFile('success.txt')).toString().trim().split('\n'));
 // console.log("success with ",successRepos.size)
-const intSet = int (successRepos,repoKeys)
-console.log("Anything right now? ",intSet)
+/**
+ * @type {Set<string>}
+ */
+const successfulVulnerableParents = setIntersect(successRepos,vulnerableParentKeys)
+// console.log("Anything right now? ",JSON.stringify([...successfulVulnerableParents]))
 
 
+const parentToDepVulnerabilityMap = new Map([...successfulVulnerableParents].map(e=>
+    [e,parentDependencyVulnMapping.get(e).flatMap(f=>vulnerableDependenciesNameCVEMap.get(f)??[])]
+))
+// console.log(parentToDepVulnerabilityMap)
 
+// flattened
+/** @type {[string,CVEEntrySimple][]} */
+const flattenedParentToDepVulnerabilityMapEntries = [...parentToDepVulnerabilityMap.entries()].flatMap(([k,vs])=>(vs.map(v=>([k,v]))));
+
+/** @typedef {CVEEntrySimple & {main_repo:string}} CVEDepEntry */
+/** @type {CVEDepEntry[]} */
+const flattenedParentToDepVulnerabilityList = flattenedParentToDepVulnerabilityMapEntries.map(([k,v])=>({...v,main_repo:k}))
+
+// console.log(flattenedParentToDepVulnerabilityList)
+
+// make csv and write to file using csv library
+const op = stringify(flattenedParentToDepVulnerabilityList,{header:true})
+writeFileSync('vulnerability_report.csv',op);
+// console.log(op)
 
 async function fetchAdvisoryForAffects(affectsArray) {
     const affects = affectsArray.join(',');

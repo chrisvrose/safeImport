@@ -31,19 +31,35 @@ export async function findSlicedDeps(){
 }
 
 /**
- * Given a list of deps, find the repos that have these
+ * Given a list of deps, find the repos that have these.
+ * Return a map of these parents, with their children.
  * @param {string[]} dependencies 
  */
-export async function checkForParentDep(dependencies){
+export async function getMinimalParentRepoMap(dependencies){
+    const depSet = new Set(dependencies);
     // dep -> main
-    const map = await getReverseDeps();
-    const reposet = dependencies.flatMap(dep => (map.get(dep)??[]));
-    const repos = new Set(reposet);
-    return repos;
+    const reverseDepMap = await getReverseDeps();
+    // console.log("cache",reverseDepMap);
+    /** @type {Map<string,string[]>} */
+    const parentChildrenMap = new Map();
+    for(const [childName, parentRepos] of reverseDepMap){
+        if(depSet.has(childName)){
+            for(const parentRepo of parentRepos){
+                const existingChildMap = parentChildrenMap.get(parentRepo)??[];
+                existingChildMap.push(childName);
+                parentChildrenMap.set(parentRepo,existingChildMap);
+            }
+        }
+    }
+    return parentChildrenMap;
 }
 
-// for a given dep, find the list of main repo that has this dep. return map.
+// Get all reverse deps
+
 async function getReverseDeps() {
+    /**
+     * @type {Map<string,string[]>}
+     */
     const x = new Map();
     const distPath = path.resolve('dist');
 
