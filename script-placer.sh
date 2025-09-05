@@ -19,7 +19,7 @@ fi
 pushd "$REPO_FOLDER"
 npm i || fail "Failed to install dependencies"
 rm -rf .node_modules node_modules_2
-npm run test >> ../coverage/$REPO_BASE-pre.json
+timeout 5m npm run test >> ../coverage/$REPO_BASE-pre.json
 # less ../coverage/$REPO_BASE-pre.json
 if [[ $? -ne 0 ]]; then
     echo "Tests failed in $REPO_FOLDER"
