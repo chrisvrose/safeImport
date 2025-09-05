@@ -7,6 +7,8 @@ import { resolve } from "node:path";
  * @template T
  * @param {string} fileName 
  * @param {()=>Promise<T>} asyncCallback 
+ * @param {boolean} silent
+ * @param {boolean} passthrough If true, store in cache and always call the function
  * @returns {Promise<T>}
  */
 export async function cacheFunctionOutput(fileName, asyncCallback, silent=false,passthrough=false) {
