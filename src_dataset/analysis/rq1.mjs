@@ -21,9 +21,12 @@ const repos = await readFile('success.txt', 'utf-8').then(data => data.split('\n
 // const repo = repos[2];
 
 const res = await processPromisesBatch(repos,10,processRepo);
-
+// const x = await processRepo('simple-swizzle')
+// console.log(x)
 // res.map(e=>e===undefined?{}:e);
-await writeFile('rq1_output.csv', stringify(res.map(e=>e===undefined?{}:e), { header: true }));
+
+await writeFile('rq1_output.csv', stringify(res.map((e,i)=>e===undefined?{repo:repos[i]}:e), { header: true }));
+
 // const transitiveDepsReduced = res.filter(e => e !== undefined && e.ourSolutionTransitiveDeps < e.webpackTransitiveDeps);
 // console.log(transitiveDepsReduced.length, 'out of', res.filter(e => e !== undefined).length);
 
@@ -31,7 +34,7 @@ async function processRepo(repo){
 
     
     if(!existsSync(`../candidates-repos/${repo}/package.json`)) {
-        // console.log(`Skipping ${repo} as package.json does not exist`);
+        console.log(`Skipping MAINREPO ${repo} as package.json does not exist`);
         return;
     }
     const parsedPackageConfig = JSON.parse(fs.readFileSync(`../candidates-repos/${repo}/package.json`, 'utf-8'));
@@ -44,12 +47,42 @@ async function processRepo(repo){
 
 
 
-    if(!existsSync(`../candidates-repos/node_modules_backup/node_modules_${repo}`)){
-        // console.log(`Skipping ${repo} as node_modules_backup does not exist`);
+    // if(!existsSync(`../candidates-repos/node_modules_backup/node_modules_${repo}`)){
+    //     console.log(`Skipping NODEBACKUP ${repo} as node_modules_backup does not exist`);
+    //     if(existsSync(`../candidate-repos/${repo}/.node_modules`)){
+    //         console.log(`However, .node_modules exists for ${repo}, so counting it as success`);
+    //     }
+    //     if(existsSync(`../candidate-repos/${repo}/node_modules_2`)){
+    //         console.log(`However, .node_modules exists for ${repo}, so counting it as success`);
+    //     }
+
+    //     return;
+    // }
+    let backupPlace = null;
+    const candidates = [
+        `../candidates-repos/node_modules_backup/node_modules_${repo}`,
+        `../candidates-repos/${repo}/node_modules_2`,
+        `../candidates-repos/${repo}/.node_modules`,
+        `../candidates-repos/${repo}/node_modules`
+    ]
+    // console.log(candidates)
+    for(const candidate of candidates){
+        console.log('Checking',candidate)
+        if(existsSync(candidate)){
+            if(candidate!==candidates[0]){
+                console.log(`Warning: Using ${candidate} for ${repo}, this may not be a backup folder`);
+            }
+            backupPlace = candidate;
+            break;
+        }
+    }    
+    if(backupPlace === null){
+        console.log(`Skipping NODEBACKUP ${repo} as node_modules_backup does not exist`);
         return;
     }
+    console.log('selected',backupPlace)
     // 2. Get ground truth -> number of packages in node_modules_backup
-    const allDeps = fs.readdirSync(`../candidates-repos/node_modules_backup/node_modules_${repo}`);
+    const allDeps = fs.readdirSync(backupPlace);
     const allDepsSet = new Set(allDeps);
     // console.log(allDepsSet)
 
