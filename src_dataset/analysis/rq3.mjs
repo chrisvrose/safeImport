@@ -96,7 +96,11 @@ async function getWebpackLinesOfCode(repo, directDepsSet){
     let webpackLinesOfCode = 0;
     for(const file of webpackFiles){
         const outputFilePath = path.join('output', repo, file);
-        const contentString = await readFile(outputFilePath, 'utf-8');
+        const oldContentString = await readFile(outputFilePath, 'utf-8');
+        const terserOptimizedPath = await useCachedOptimizedTerserModule(outputFilePath, path.basename(file, '.bundle.cjs'), oldContentString);
+        // console.log('terserOptimizedPath', terserOptimizedPath);
+        const contentString = await readFile(terserOptimizedPath, 'utf-8');
+        //
         /** @type {import('estree').Program} */
         let ast;
         try{
@@ -111,7 +115,9 @@ async function getWebpackLinesOfCode(repo, directDepsSet){
         const moduleList = esquery(ast, 'VariableDeclarator[id.name="__webpack_modules__"] > ObjectExpression > Property');
         // console.log(moduleList);
         for (const module of moduleList) {
-            const moduleName = module.key.value
+            const moduleName = module.key.value ?? module.key.name;
+            // console.log(dependencyName)
+            // if(moduleName===undefined){console.error('moduleName is undefined', module,module.key.name);throw Error(5);}
             const dependencyName = moduleName.split('/')[4];
             // console.log('dep',dependencyName);
             if(!directDepsSet.has(dependencyName)){
@@ -240,4 +246,27 @@ async function getOurSolutionLOC(repo, directDepsSet){
     // console.log('ourSolutionLinesOfCode', ourSolutionLinesOfCode);
     return ourSolutionLinesOfCode;
 
+}
+
+
+/**
+ * duped from rq1
+ * @param {string} filePath 
+ * @param {string} depName 
+ * @param {string} oldContent 
+ * @returns 
+ */
+async function useCachedOptimizedTerserModule(filePath, depName, oldContent) {
+    // check if the file exists
+    const terserPath = path.join(path.dirname(filePath), `${depName}.optimized.cjs`);
+    if (existsSync(terserPath)) {
+        // await rm(terserPath);
+        return terserPath;
+    }
+    // console.log('ftp', filePath,terserPath)
+    const res = await minify(oldContent,{compress: true, format:{beautify: true}});
+    await writeFile(terserPath, res.code);
+    // res.code
+    console.log(terserPath,'does not exist, creating it now')
+    return terserPath
 }

@@ -3,7 +3,7 @@ glob-parent,313,output/glob-parent,dist/glob-parent,1,1
 is-glob,121,output/is-glob,dist/is-glob,0,0
 mime-types,315,output/mime-types,dist/mime-types,0,0
 doctrine,,,,,
-define-property,137,output/define-property,dist/define-property,4,0
+define-property,137,output/define-property,dist/define-property,0,0
 jsonfile,286,output/jsonfile,dist/jsonfile,0,0
 optionator,,,,,
 http-errors,317,output/http-errors,dist/http-errors,0,0

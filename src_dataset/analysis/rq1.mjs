@@ -12,16 +12,17 @@ Foreach repo in success.txt
 */
 
 import fs, { existsSync } from 'fs';
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
 import { processPromisesBatch } from '../batch.mjs';
 import { stringify } from 'csv/sync';
+import {minify} from 'terser'
 const repos = await readFile('success.txt', 'utf-8').then(data => data.split('\n').filter(Boolean).filter(e=>!e.startsWith('#')));
 
 // const repo = repos[2];
 
 const res = await processPromisesBatch(repos,10,processRepo);
-// const x = await processRepo('simple-swizzle')
+// const x = await processRepo('glob-parent')
 // console.log(x)
 // res.map(e=>e===undefined?{}:e);
 
@@ -188,8 +189,11 @@ async function extractTransitiveDependenciesFromWebPack(repo) {
         const filePath = path.join(`output/${repo}`, file);
         // strip the .bundle.cjs from the file name
         const mainDependencyName = file.replace('.bundle.cjs', '');
-        // console.log(filePath);
-        const content = await readFile(filePath, 'utf-8');
+
+        const oldContent = await readFile(filePath, 'utf-8');
+        const newFilePath = await useCachedOptimizedTerserModule(filePath,mainDependencyName, oldContent)
+
+        const content = await readFile(newFilePath, 'utf-8');
         // all `require("../candidates-repos/<repo>/..."` followed by anything that is not a quote or a space  should be recorded - this is a dependency file
         const regex = /"\.\.\/candidates-repos\/[^" ]+/g;
         const matches = content.match(regex) ?? [];
@@ -204,3 +208,24 @@ async function extractTransitiveDependenciesFromWebPack(repo) {
     return finalTransitiveDeps
 }
 
+/**
+ * 
+ * @param {string} filePath 
+ * @param {string} depName 
+ * @param {string} oldContent 
+ * @returns 
+ */
+async function useCachedOptimizedTerserModule(filePath, depName, oldContent) {
+    // check if the file exists
+    const terserPath = path.join(path.dirname(filePath), `${depName}.optimized.cjs`);
+    if (existsSync(terserPath)) {
+        // await rm(terserPath);
+        return terserPath;
+    }
+    // console.log('ftp', filePath,terserPath)
+    const res = await minify(oldContent,{compress: true, format:{beautify: true}});
+    await writeFile(terserPath, res.code);
+    // res.code
+    console.log(terserPath,'does not exist, creating it now')
+    return terserPath
+}
