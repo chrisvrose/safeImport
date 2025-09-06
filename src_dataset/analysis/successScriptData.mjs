@@ -20,7 +20,7 @@ const repos = text.trim().split('\n');
 const repoCountsCached = await cacheFunctionOutput('repoClocCounts.json',async ()=>{
     const repoCounts = await processPromisesBatch(repos,32,getData);
     return repoCounts;
-},true);
+},true, true);
 console.log(repoCountsCached.filter(e=>e.before.nFiles!==null).length)
 
 /** @typedef {typeof repoCountsCached[0]} RepoCount */
@@ -936,7 +936,12 @@ async function verifyTreeStats(repo){
     const existsOriginal = existsSync(`../candidates-repos/${repo}/node_modules`);
     const existsHidden = existsSync(`../candidates-repos/${repo}/.node_modules`);
     if(!existsOriginal && !existsHidden){
-        return {depth:null,width:null};
+        const npmFailFilterList = ['yargs-unparser','payment','vue-shortkey']
+        if(npmFailFilterList.includes(repo)) {
+            return {depth:null,width:null};
+        }
+        console.log(`Repo ${repo} does not have node_modules or .node_modules, cannot get tree stats`);
+        await npmInstall(`../candidates-repos/${repo}`);
     }
     if(!existsOriginal && existsHidden){
         await rename(`../candidates-repos/${repo}/.node_modules`, `../candidates-repos/${repo}/node_modules`);
@@ -951,6 +956,11 @@ async function verifyTreeStats(repo){
         await rename(`../candidates-repos/${repo}/node_modules`, `../candidates-repos/${repo}/.node_modules`);
     }
     return res;
+}
+
+async function npmInstall(repoPath){
+    const {stdout} = await execP(`pushd ${repoPath} && npm i`)
+    console.log(`Installing dependencies`,stdout.trim());
 }
 
 function assertFilesContained(stdOutObj, repo) {

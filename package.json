@@ -16,7 +16,9 @@
     "babel-preset-node6": "^11.0.0",
     "csv": "^6.3.11",
     "download-counts": "^2.20250701.0",
+    "escodegen": "^2.1.0",
     "eslint-scope": "^8.4.0",
+    "espree": "^10.4.0",
     "esprima": "^4.0.1",
     "esquery": "^1.6.0",
     "esrecurse": "^4.3.0",
@@ -45,6 +47,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
     "@types/eslint-scope": "^8.3.0",
+    "@types/espree": "^10.1.0",
     "@types/estree": "^1.0.8",
     "@types/node": "^24.0.0",
     "babel-preset-stage-2": "^6.24.1",

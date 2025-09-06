@@ -1,7 +1,7 @@
 
 
 
-REPO_BASE="hpack.js"
+REPO_BASE="fined"
 
 REPO_FOLDER="../candidates-repos/$REPO_BASE"
 

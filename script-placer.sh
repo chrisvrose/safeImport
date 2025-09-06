@@ -18,12 +18,12 @@ fi
 
 pushd "$REPO_FOLDER"
 npm i || fail "Failed to install dependencies"
-rm -rf .node_modules node_modules_2
+rm -rf .node_modules node_modules_2 "../node_modules_backup/node_modules_$REPO_BASE"
 timeout 5m npm run test >> ../coverage/$REPO_BASE-pre.json
 # less ../coverage/$REPO_BASE-pre.json
 if [[ $? -ne 0 ]]; then
     echo "Tests failed in $REPO_FOLDER"
-    echo "$REPO_FOLDER" >> ../coverage/pre-failed.txt
+    echo "$REPO_FOLDER" >> ../coverage/results/pre-failed.txt
 fi
 popd
 
@@ -37,18 +37,18 @@ if [[ $PRE_TEST_RESULT -ne 0 ]]; then
 fi
 
 pushd "$REPO_FOLDER"
-mv node_modules .node_modules
-NODE_PATH="/home/atreyab/Documents/Docs/SlicingImport/repos-js/safeImport/dist/$REPO_BASE:/home/atreyab/Documents/Docs/SlicingImport/repos-js/candidates-repos/$REPO_BASE/.node_modules" timeout 5m npm run test #>> ../coverage/$REPO_BASE-post.txt
+mv node_modules "../node_modules_backup/node_modules_$REPO_BASE"
+NODE_PATH="/home/atreyab/Documents/Docs/SlicingImport/repos-js/safeImport/dist/$REPO_BASE:/home/atreyab/Documents/Docs/SlicingImport/repos-js/candidates-repos/node_modules_backup/node_modules_$REPO_BASE" timeout 5m npm run test #>> ../coverage/$REPO_BASE-post.txt
 # less ../coverage/$REPO_BASE-post.txt
 POST_TEST_RESULT=$?
 # if post test is true, or both are false, then we can proceed
 if [[ $POST_TEST_RESULT -ne 0 && $PRE_TEST_RESULT -ne 0 ]]; then
     echo "something"
-    echo $REPO_FOLDER >> ../coverage/failed.txt
+    echo $REPO_FOLDER >> ../coverage/results/failed.txt
     # exit 1
 fi
 if [[ $POST_TEST_RESULT -eq 0 ]]; then
-    echo "$REPO_BASE" >> ../coverage/success.txt
+    echo "$REPO_BASE" >> ../coverage/results/success.txt
     echo "Successfully processed $REPO_BASE"
 fi
 popd

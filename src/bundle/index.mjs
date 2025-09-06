@@ -21,7 +21,7 @@ export function wpCompress(l, moduleLocation,outputPath = path.resolve('./output
     const outputFile = l + '.bundle.cjs';
     console.log(`[WebPack] Compressing ${l} in ${moduleLocation} to ${path.join(finalOutputPath, outputFile)}`);
     const moduleFallbackMap = builtinModules.reduce((prev, current) => {
-        prev[current] = false;
+        prev[current] = current;
         return prev;
     }, {});
     wp({
@@ -37,8 +37,9 @@ export function wpCompress(l, moduleLocation,outputPath = path.resolve('./output
         },
         resolve:{
             modules: [path.join(moduleLocation,'./node_modules')],
-            fallback:moduleFallbackMap
+            // fallback:moduleFallbackMap
         },
+        externals:moduleFallbackMap,
         output: {
             path: finalOutputPath,
             filename: outputFile,
