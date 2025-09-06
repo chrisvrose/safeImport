@@ -67,11 +67,11 @@ async function processRepo(repo){
     ]
     // console.log(candidates)
     for(const candidate of candidates){
-        console.log('Checking',candidate)
+        // console.log('Checking',candidate)
         if(existsSync(candidate)){
-            if(candidate!==candidates[0]){
-                console.log(`Warning: Using ${candidate} for ${repo}, this may not be a backup folder`);
-            }
+            // if(candidate!==candidates[0]){
+            //     // console.log(`Warning: Using ${candidate} for ${repo}, this may not be a backup folder`);
+            // }
             backupPlace = candidate;
             break;
         }
@@ -80,7 +80,7 @@ async function processRepo(repo){
         console.log(`Skipping NODEBACKUP ${repo} as node_modules_backup does not exist`);
         return;
     }
-    console.log('selected',backupPlace)
+    // console.log('selected',backupPlace)
     // 2. Get ground truth -> number of packages in node_modules_backup
     const allDeps = fs.readdirSync(backupPlace);
     const allDepsSet = new Set(allDeps);
