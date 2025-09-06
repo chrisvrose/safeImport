@@ -56,7 +56,7 @@ function getTreeMaxWidth(tree){
     const queue = [tree];
     while(queue.length > 0){
         const levelSize = queue.length;
-        console.log("Level size:", levelSize);
+        // console.log("Level size:", levelSize);
         if(levelSize > maxWidth){
             maxWidth = levelSize;
         }
@@ -92,7 +92,11 @@ async function main(){
 
 }
 
-
+/**
+ * 
+ * @param {string} projectPath 
+ * @returns 
+ */
 export async function getTreeStatsOfProject(projectPath) {
     const tree = await getDepTree(projectPath);
     const depth = getTreeDepth(tree);

@@ -1,7 +1,7 @@
 
 
 
-REPO_BASE="des.js"
+REPO_BASE="hpack.js"
 
 REPO_FOLDER="../candidates-repos/$REPO_BASE"
 
@@ -98,10 +98,29 @@ case "$INPUT_FUNCTION" in
         fi
         ;;
     "cloc")
+        # calculate the deptree stats
+        pushd "$REPO_FOLDER"
+        if [[ -d ".node_modules" ]]; then
+            mv .node_modules node_modules
+            popd
+            node src_deptree/index.mjs "$REPO_FOLDER" || fail "Failed to execute src_deptree/index.mjs"
+            pushd "$REPO_FOLDER"
+            mv node_modules .node_modules
+        else
+            if [[ -d "node_modules" ]]; then
+                popd
+                node src_deptree/index.mjs "$REPO_FOLDER" || fail "Failed to execute src_deptree/index.mjs"
+                pushd "$REPO_FOLDER"
+            else
+                fail "Neither node_modules nor .node_modules exist, cannot run cloc"
+            fi
+            fail ".node_modules does not exist, cannot run cloc"
+        fi
+        popd
         echo "--: PRE :--"
-        cloc "output/$REPO_BASE"
+        cloc --json "output/$REPO_BASE" | jq "{nFiles:.JavaScript.nFiles,code:.JavaScript.code}"
         echo "--: POST :--"
-        cloc "dist/$REPO_BASE" --exclude-ext=json
+        cloc --json "dist/$REPO_BASE" --exclude-ext=json | jq "{nFiles:.JavaScript.nFiles,code:.JavaScript.code}"
         echo "--: DEPS :--"
         echo "Dependencies: " `ls -1 dist/$REPO_BASE | wc -l`
         ;;

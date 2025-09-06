@@ -1,24 +1,32 @@
 Handle aliasing as a important piece in draft
 Please note down problem exploration
 
-
-
-### Repo mining
-
--> Get list of all packages
--> >50000 downloads
--> filter by package.json exists in root
--> filter by test libs
--> filter away typescript -> existence of tsconfig.json
-
-
--> filter by unsliceable libs (?)
-
-
 ### My single lib analysis.
 
-- [ ] Scan a library. Get its dependencies.
-- [ ] Call for its dependencies. Webpack them into individual files.
-  - [ ] Optional: Use webpack to push them all into one lib file
-  - [ ] Slice this lib for packages
-  - [ ] Replace/proxy them and then unit test them.
+- [X] Scan a library. Get its dependencies.
+- [X] Call for its dependencies. Webpack them into individual files.
+  - [X] Optional: Use webpack to push them all into one lib file
+  - [X] Slice this lib for packages
+  - [X] Replace/proxy them and then unit test them.
+
+
+### Multi lib analysis
+
+TODOs:
+- [ ] CVE test
+- [ ] ORBS testing
+- [ ] Report writing
+
+
+### Requirements further
+
+- [X] Get some sort of require("") thing running.  P1
+  - [X] Find out how many of these projects use require instead of import.
+- [X] Try to find a way to test the slicing given some cherry-picked libraries that work. P1
+- [ ] CVE Removal (doubtful) -> Document the thing.
+- [ ] ORBs testing
+
+- [ ] Report writing
+
+
+Remember: Slicing within 10m limit was set
