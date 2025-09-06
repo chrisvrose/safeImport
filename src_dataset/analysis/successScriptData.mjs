@@ -20,7 +20,7 @@ const repos = text.trim().split('\n');
 const repoCountsCached = await cacheFunctionOutput('repoClocCounts.json',async ()=>{
     const repoCounts = await processPromisesBatch(repos,32,getData);
     return repoCounts;
-},true);
+},true, true);
 // console.log(repoCountsCached)
 
 // console.log(x)

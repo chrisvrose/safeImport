@@ -219,7 +219,7 @@ async function useCachedOptimizedTerserModule(filePath, depName, oldContent) {
     // check if the file exists
     const terserPath = path.join(path.dirname(filePath), `${depName}.optimized.cjs`);
     if (existsSync(terserPath)) {
-        await rm(terserPath);
+        // await rm(terserPath);
         return terserPath;
     }
     // console.log('ftp', filePath,terserPath)

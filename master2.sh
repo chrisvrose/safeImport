@@ -1,7 +1,13 @@
+# master with an input function
 
 
+REPO_BASE="$2"
 
-REPO_BASE="is-unc-path"
+if [[ -z "$REPO_BASE" ]]; then
+    echo "Usage: $0 <input_function> <repo_base>"
+    exit 1
+fi
+# exit 0;
 
 REPO_FOLDER="../candidates-repos/$REPO_BASE"
 

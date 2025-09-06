@@ -160,12 +160,20 @@ async function getWebpackLinesOfCode(repo, directDepsSet){
 async function getGroundTruthLinesOfCode(repo, directDepsSet){
     let groundTruthLinesOfCode = 0;
     for(const dep of directDepsSet){
-        if(!existsSync(`../candidates-repos/node_modules_backup/node_modules_${repo}/${dep}`)){
-            console.log(`Skipping dep ${dep} as it does not exist`);
+        let candidate = null;
+        if(existsSync(`../candidates-repos/node_modules_backup/node_modules_${repo}/${dep}`)){
+            candidate = `../candidates-repos/node_modules_backup/node_modules_${repo}/${dep}`;
+            // continue;
+        }
+        if(candidate==null && existsSync(`../candidates-repos/${repo}/node_modules/${dep}`)){
+            candidate = `../candidates-repos/${repo}/node_modules/${dep}`;
+        }
+        if(candidate===null){
+            console.warn(`Skipping dep ${dep} in repo ${repo} as it does not exist in node_modules_${repo} or node_modules`);
             continue;
         }
         try{
-            const {stdout, stderr} = await execPromise(`cloc --json ../candidates-repos/node_modules_backup/node_modules_${repo}/${dep} | jq ".JavaScript.code"`);
+            const {stdout, stderr} = await execPromise(`cloc --json ${candidate} | jq ".JavaScript.code"`);
             if(stderr){
                 console.warn(`Error while getting cloc for dep ${dep} in repo ${repo}: ${stderr}`);
                 // continue;
@@ -260,7 +268,7 @@ async function useCachedOptimizedTerserModule(filePath, depName, oldContent) {
     // check if the file exists
     const terserPath = path.join(path.dirname(filePath), `${depName}.optimized.cjs`);
     if (existsSync(terserPath)) {
-        await rm(terserPath);
+        // await rm(terserPath);
         return terserPath;
     }
     // console.log('ftp', filePath,terserPath)
