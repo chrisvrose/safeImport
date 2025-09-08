@@ -10,10 +10,25 @@
 | ------------- | :------------------------------------------- |
 | `src`         | Source                                       |
 | `src_dataset` | Source for batch cloning public repositories |
+| `src_vuln` | Source for identifying CVEs |
+| `src_dataset` | Source for batch cloning public repositories |
+| `lib` | SlicedImport Primitive |
 | `test_src`    | Example targets for development              |
 | `output`      | Webpack-ed dependencies                      |
 | `dist`        | Sliced dependencies                          |
 
+
+### Datasets
+
+| File                        | Description                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `mineableRepositories2.csv` | npm package List - Master Dataset                                                                                         |
+| `success.txt`               | List of repositories where slicedImport ran successfully (Independent of tests and of whether anything was sliced at all) |
+| `Slicing - Numbers.xlsx`    | `Final numbers used to generate Results and Plots`                                                                        |
+| `rq1_output.csv`            | RQ1 dataset                                                                                                               |
+| `rq3_output.csv`            | RQ3 dataset                                                                                                               |
+| `success_cloc_stats.csv`    | RQ2 dataset                                                                                                               |
+| `vulnerability_report.csv` | Raw data for clients where the dependency is tagged with CVEs |
 
 
 ### How to rerun the program
